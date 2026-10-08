@@ -5,6 +5,7 @@
 // Playdom/Disney. Los textos que aún no estén en él se agregan vacíos ("") para traducirlos, y mientras
 // se dejan en inglés.
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { withoutAccents } from "./without-accents.ts";
 
 const ORIGINALS = "public/game/original-json";
 const OUTPUT = "public/game/assets/json";
@@ -31,7 +32,7 @@ function translate(node: unknown, fields: string[]): void {
   for (const [key, value] of Object.entries(object)) {
     if (fields.includes(key) && typeof value === "string") {
       dictionary[value] ??= "";
-      object[key] = dictionary[value] || value;
+      object[key] = withoutAccents(dictionary[value] || value);
     } else translate(value, fields);
   }
 }

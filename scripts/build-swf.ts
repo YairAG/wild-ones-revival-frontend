@@ -10,6 +10,7 @@
 // Todo lo de public/game/ es local (archivos de Playdom/Disney), también el diccionario.
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { withoutAccents } from "./without-accents.ts";
 
 const FFDEC_DIR = process.env.FFDEC_DIR ?? "C:/Program Files (x86)/FFDec";
 const GAME = "public/game";
@@ -49,9 +50,9 @@ function translate(text: string, id: string): string {
   if (text.startsWith("<"))
     return text.replace(/>([^<]+)</g, (_, inner: string) => `>${translate(inner, id)}<`);
   if (!/[a-z]{2,}/i.test(text)) return text;
-  if (dictionary[`#${id} ${text}`]) return dictionary[`#${id} ${text}`];
   dictionary[text] ??= "";
-  return dictionary[text] || text;
+  const translated = dictionary[`#${id} ${text}`] || dictionary[text];
+  return translated ? withoutAccents(translated) : text;
 }
 
 if (!existsSync(ORIGINAL)) throw new Error(`Falta ${ORIGINAL} (copia del publicV1.swf original)`);
@@ -70,7 +71,7 @@ const tsvEscape = (text: string) => text.replace(/\n/g, "\\n").replace(/\t/g, "\
 writeFileSync(
   `${WORK}/code.tsv`,
   Object.entries(codeDictionary)
-    .map(([from, to]) => `${tsvEscape(from)}\t${tsvEscape(to)}`)
+    .map(([from, to]) => `${tsvEscape(from)}\t${tsvEscape(withoutAccents(to))}`)
     .join("\n"),
   "utf8",
 );
