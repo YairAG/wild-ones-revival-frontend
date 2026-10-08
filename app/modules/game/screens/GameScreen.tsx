@@ -30,20 +30,17 @@ export function GameScreen() {
 
   return (
     <div className="flex min-h-screen flex-col xl:h-screen">
-      <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b-[3px] border-sky-deep bg-sky px-5">
+      <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b-[3px] border-cielo-profundo bg-cielo px-5">
         <span className="logo text-3xl">Wild Revival</span>
         <nav className="flex items-center gap-3">
           {/* Avatar con las iniciales y el nombre */}
           <span className="flex items-center gap-2.5 text-white">
-            <span className="flex size-9 items-center justify-center rounded border-2 border-wood bg-sand text-[13px] font-extrabold text-wood">
+            <span className="flex size-9 items-center justify-center rounded-control border-2 border-madera bg-arena text-ayuda font-extrabold text-madera">
               {session?.dname.slice(0, 2).toUpperCase()}
             </span>
-            <span className="text-[15px] font-extrabold">{session?.dname}</span>
+            <span className="text-cuerpo font-extrabold">{session?.dname}</span>
           </span>
-          <button
-            onClick={exit}
-            className="h-10 rounded bg-sky-deep px-3.5 text-sm font-extrabold text-white"
-          >
+          <button onClick={exit} className="btn btn-compacto bg-cielo-profundo text-white">
             Cerrar sesión
           </button>
         </nav>
@@ -60,7 +57,7 @@ export function GameScreen() {
             si no, todo el ancho, pero sin pasar del alto de la ventana (menos el encabezado y márgenes) */}
         <div
           ref={gameContainer}
-          className="order-first mx-auto aspect-[760/740] w-[min(100%,calc((100svh_-_7rem)*760/740))] overflow-hidden rounded-md border-[3px] border-sky-deep bg-game shadow-[0_5px_0_var(--color-sky-deep)] md:col-span-2 xl:order-none xl:mx-0 xl:h-full xl:w-auto xl:max-w-full"
+          className="order-first mx-auto aspect-[760/740] w-[min(100%,calc((100svh_-_7rem)*760/740))] marco-juego overflow-hidden md:col-span-2 xl:order-none xl:mx-0 xl:h-full xl:w-auto xl:max-w-full"
         />
         <aside className="flex h-[32rem] min-w-0 flex-col xl:h-auto xl:flex-1">
           <GlobalChatPanel />

@@ -7,7 +7,7 @@ export function FriendsPanel() {
   return (
     <Panel
       title="Amigos"
-      badge={<span className="text-[13px] font-extrabold text-sky">En línea · {online}</span>}
+      badge={<span className="text-ayuda font-extrabold text-cielo">En línea · {online}</span>}
       footer={
         <>
           <label htmlFor="agregar-amigo" className="sr-only">
@@ -17,12 +17,9 @@ export function FriendsPanel() {
             id="agregar-amigo"
             disabled
             placeholder="Nombre del jugador"
-            className="h-11 min-w-0 flex-1 rounded border-2 border-line bg-field px-3 text-sm placeholder:text-disabled"
+            className="campo min-w-0 flex-1"
           />
-          <button
-            disabled
-            className="h-11 rounded border-2 border-sky-deep bg-sky px-3.5 text-sm font-extrabold text-white disabled:opacity-60"
-          >
+          <button disabled className="btn btn-secundario">
             Agregar
           </button>
         </>
@@ -30,21 +27,17 @@ export function FriendsPanel() {
     >
       {requests.length > 0 && (
         <div className="mb-3 flex flex-col">
-          <h3 className="mb-1 text-xs font-extrabold text-muted uppercase">Solicitudes</h3>
+          <h3 className="text-micro mb-1 font-extrabold text-texto-secundario uppercase">
+            Solicitudes
+          </h3>
           {requests.map((request) => (
             <div key={request.id} className="flex min-h-11 items-center justify-between gap-2">
-              <span className="text-[15px] font-bold">{request.dname}</span>
+              <span className="text-cuerpo font-bold">{request.dname}</span>
               <span className="flex gap-1.5">
-                <button
-                  disabled
-                  className="h-8 rounded border-2 border-line bg-panel px-2.5 text-xs font-extrabold text-sky-deep"
-                >
+                <button disabled className="btn btn-fila btn-secundario">
                   Aceptar
                 </button>
-                <button
-                  disabled
-                  className="h-8 rounded border-2 border-line bg-panel px-2.5 text-xs font-extrabold text-muted"
-                >
+                <button disabled className="btn btn-fila btn-secundario">
                   Rechazar
                 </button>
               </span>
@@ -53,19 +46,17 @@ export function FriendsPanel() {
         </div>
       )}
 
-      <h3 className="mb-1 text-xs font-extrabold text-muted uppercase">Amigos</h3>
+      <h3 className="text-micro mb-1 font-extrabold text-texto-secundario uppercase">Amigos</h3>
       {friends.map((friend) => (
         <div key={friend.id} className="flex min-h-11 items-center gap-2.5">
-          <span
-            className={`size-2.5 shrink-0 rounded-full ${friend.online ? "bg-ok" : "bg-[#c3cdd2]"}`}
-          />
+          <span className={`estado ${friend.online ? "estado-en-linea" : "estado-desconectado"}`} />
           <span className="flex min-w-0 flex-1 flex-col leading-tight">
             <span
-              className={`truncate text-[15px] font-bold ${friend.online ? "text-ink" : "text-faint"}`}
+              className={`text-cuerpo truncate font-bold ${friend.online ? "text-texto" : "text-texto-terciario"}`}
             >
               {friend.dname}
             </span>
-            <span className="text-xs font-semibold text-muted">
+            <span className="text-micro font-semibold text-texto-secundario">
               {friend.online ? "En línea" : "Desconectado"} · Nivel {friend.level}
             </span>
           </span>

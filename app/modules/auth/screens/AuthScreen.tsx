@@ -15,27 +15,30 @@ export function AuthScreen() {
       <main className="relative flex flex-1 flex-col items-center justify-center gap-7 px-4 pt-12 pb-36">
         <div className="flex flex-col items-center gap-1 text-center">
           <span className="logo text-6xl sm:text-[84px]">Wild Revival</span>
-          <span className="text-[15px] font-bold text-sky-deep">
+          <span className="text-cuerpo font-bold text-cielo-profundo">
             el clásico Wild Ones, mantenido por la comunidad
           </span>
         </div>
 
         <div className="flex w-full max-w-[820px] flex-wrap items-start justify-center gap-6">
-          <section className="flex max-w-[400px] flex-[1_1_340px] flex-col gap-4 rounded-lg border-2 border-sky-deep bg-panel p-6 shadow-[0_5px_0_var(--color-sky-deep)]">
+          <section className="flex max-w-[400px] flex-[1_1_340px] flex-col gap-4 rounded-modal border-2 border-cielo-profundo bg-panel p-6 shadow-nivel-2">
             <div className="flex flex-col gap-1">
-              <h1 className="font-title text-2xl font-normal">
+              <h1 className="text-titulo font-display">
                 {isLogin ? "Iniciar sesión" : "Crear cuenta"}
               </h1>
               {!isLogin && (
-                <p className="text-sm text-muted">
+                <p className="text-etiqueta text-texto-secundario">
                   Tu nombre de usuario es lo que verán los demás en el chat y en partida.
                 </p>
               )}
             </div>
             <AuthForm onSuccess={() => navigate("/play")} />
-            <p className="pt-1 text-center text-sm font-bold">
+            <p className="text-etiqueta pt-1 text-center font-bold">
               {isLogin ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? "}
-              <button onClick={toggleMode} className="font-extrabold text-link hover:underline">
+              <button
+                onClick={toggleMode}
+                className="font-extrabold text-enlace hover:text-enlace-hover"
+              >
                 {isLogin ? "Crear cuenta" : "Inicia sesión"}
               </button>
             </p>
@@ -47,7 +50,7 @@ export function AuthScreen() {
         </div>
       </main>
 
-      <footer className="relative px-6 pt-3.5 pb-4.5 text-[13px] font-semibold text-[#1f3a1a]">
+      <footer className="relative px-6 pt-3.5 pb-4.5 text-ayuda font-semibold text-texto">
         Proyecto sin fines de lucro. No afiliado a los dueños originales del juego.
       </footer>
     </Scene>
