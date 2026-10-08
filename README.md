@@ -30,6 +30,16 @@ Se copian a mano desde la carpeta `Web/` de [fgpons/wo-latin-ps](https://github.
 | `images/` (carpeta entera)       | `public/game/images/`      |
 | los `.dat` (`assets/json/*.dat`) | `public/game/assets/json/` |
 
+### Traducción al español
+
+Los nombres y descripciones de armas, accesorios, regalos y comida están en los `.dat`. Se traducen con:
+
+    node scripts/translate-dat.ts
+
+Lee los originales de `public/game/original-json/` (copia de los `.dat` sin tocar), aplica el diccionario
+`public/game/translations/es.json` y escribe en `public/game/assets/json/`. El diccionario es local como todo
+`public/game/` (tiene los textos originales); los textos nuevos se agregan vacíos para traducirlos.
+
 ## Cómo se conecta el SWF (`app/modules/game/services/ruffle.ts`)
 
 El SWF original está hecho para la web de 2018: pide sus archivos a `http://localhost/…` y se conecta por
