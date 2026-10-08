@@ -56,7 +56,9 @@ Parte siempre de `public/game/original-publicV1.swf` (copia del SWF sin tocar) y
 3. `scripts/swf/ReplaceStrings.java`: traduce los textos que pone el código del juego (p. ej. "unlock at level ")
    con el diccionario local `public/game/translations/code-es.json`, revisado a mano porque la misma cadena podría
    ser una clave interna.
-4. Traduce los textos fijos con el diccionario local `public/game/translations/swf-es.json` y los importa con
+4. `scripts/swf/RedrawLabels.java`: redibuja las palabras del menú que son dibujos y no texto (HOME → INICIO,
+   MULTIPLAYER → MULTIJUGADOR, SHOP → TIENDA) con la misma fuente, y alarga su fondo.
+5. Traduce los textos fijos con el diccionario local `public/game/translations/swf-es.json` y los importa con
    JPEXS. Una clave `#<id> texto` traduce distinto solo ese texto (cuando no cabe).
 
 ## Cómo se conecta el SWF (`app/modules/game/services/ruffle.ts`)

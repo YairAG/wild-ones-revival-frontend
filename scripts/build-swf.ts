@@ -2,7 +2,8 @@
 //   1. agrega a las fuentes las letras que les faltan (acentos, ñ...)    → swf/AddGlyphs.java
 //   2. oculta botones de Facebook y de compras                            → swf/HideElements.java
 //   3. traduce los textos que pone el código ("unlock at level "...)     → swf/ReplaceStrings.java
-//   4. traduce los textos fijos con el diccionario e importa el resultado → JPEXS (-export / -importText)
+//   4. redibuja las palabras que son dibujos (HOME, MULTIPLAYER, SHOP)   → swf/RedrawLabels.java
+//   5. traduce los textos fijos con el diccionario e importa el resultado → JPEXS (-export / -importText)
 //
 //   node scripts/build-swf.ts
 //
@@ -39,6 +40,18 @@ const FULL_CHINESE_ROCKS = "88";
 const HIDDEN = [1453, 1433, 219, 378, 562];
 
 // Fuentes "Chinese Rocks" (la de los menús): solo tiene mayúsculas, así que sus textos van en mayúsculas
+// Palabras del menú lateral que son dibujos (no texto), por id del dibujo: la versión al pasar el mouse y la
+// seleccionada. Y sus fondos, que se estiran para que quepa la palabra nueva (veces más anchos)
+const LABELS: Record<string, string> = {
+  1436: "INICIO",
+  1412: "INICIO",
+  1449: "MULTIJUGADOR",
+  1416: "MULTIJUGADOR",
+  1446: "TIENDA",
+  1427: "TIENDA",
+};
+const LABEL_BACKGROUNDS: Record<string, number> = { 1410: 1.1, 1415: 1.115, 1426: 1.13 };
+
 const UPPERCASE_FONTS = new Set([
   14, 61, 88, 182, 224, 306, 387, 418, 461, 515, 604, 681, 1195, 1223, 1325, 1465, 1479, 1949, 1983,
   2046,
@@ -101,7 +114,29 @@ writeFileSync(
 );
 javaTool("ReplaceStrings", `${WORK}/2-hidden.swf`, `${WORK}/3-code.swf`, `${WORK}/code.tsv`);
 
-// 4: textos fijos. Cada archivo exportado es "[límites]" seguido de renglones "[formato]texto"
+// 4: palabras dibujadas, con la Chinese Rocks completa (se exportan como SVG para quitar la palabra vieja)
+const shapes = [...Object.keys(LABELS), ...Object.keys(LABEL_BACKGROUNDS)];
+ffdec(
+  "-format",
+  "shape:svg",
+  "-selectid",
+  shapes.join(","),
+  "-export",
+  "shape",
+  `${WORK}/svg`,
+  ORIGINAL,
+);
+javaTool(
+  "RedrawLabels",
+  `${WORK}/3-code.swf`,
+  `${WORK}/4-labels.swf`,
+  `${WORK}/svg`,
+  `${WORK}/fonts/Chinese Rocks.ttf`,
+  ...Object.entries(LABELS).map(([id, word]) => `${id}=${word}`),
+  ...Object.entries(LABEL_BACKGROUNDS).map(([id, factor]) => `${id}*${factor}`),
+);
+
+// 5: textos fijos. Cada archivo exportado es "[límites]" seguido de renglones "[formato]texto"
 ffdec("-format", "text:formatted", "-export", "text", `${WORK}/texts`, ORIGINAL);
 const dictionary: Record<string, string> = existsSync(DICTIONARY)
   ? JSON.parse(readFileSync(DICTIONARY, "utf8"))
@@ -138,7 +173,7 @@ for (const file of readdirSync(`${WORK}/texts`)) {
 }
 
 writeFileSync(DICTIONARY, JSON.stringify(dictionary, null, 2));
-ffdec("-importText", `${WORK}/3-code.swf`, OUTPUT, `${WORK}/import`);
+ffdec("-importText", `${WORK}/4-labels.swf`, OUTPUT, `${WORK}/import`);
 
 const missing = Object.values(dictionary).filter((text) => !text).length;
 console.log(
