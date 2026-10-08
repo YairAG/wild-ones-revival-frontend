@@ -35,7 +35,13 @@ export function GameScreen() {
         </button>
       </header>
       <ErrorMessage message={error} />
-      <div ref={gameContainer} className="flex-1 bg-[#B2D2F6]" />
+      <div className="flex min-h-0 flex-1">
+        {/* Paneles nuestros a los lados del juego (por ahora vacíos) */}
+        <aside className="min-w-0 flex-1" />
+        {/* El escenario del SWF mide 760 x 740: el reproductor tiene esa proporción y toda la altura */}
+        <div ref={gameContainer} className="aspect-[760/740] h-full max-w-full bg-[#B2D2F6]" />
+        <aside className="min-w-0 flex-1" />
+      </div>
     </main>
   );
 }
