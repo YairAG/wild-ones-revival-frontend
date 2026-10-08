@@ -40,6 +40,20 @@ Lee los originales de `public/game/original-json/` (copia de los `.dat` sin toca
 `public/game/translations/es.json` y escribe en `public/game/assets/json/`. El diccionario es local como todo
 `public/game/` (tiene los textos originales); los textos nuevos se agregan vacíos para traducirlos.
 
+El resto de los textos (menús, botones, tutorial) están dentro del SWF. Se arma un `publicV1.swf` en español con:
+
+    node scripts/build-swf.ts
+
+Parte siempre de `public/game/original-publicV1.swf` (copia del SWF sin tocar) y necesita Java y
+[JPEXS FFDec](https://github.com/jindrapetrik/jpexs-decompiler) (carpeta en `FFDEC_DIR`, por defecto
+`C:/Program Files (x86)/FFDec`):
+
+1. `scripts/swf/AddGlyphs.java`: agrega a las fuentes del SWF las letras que les faltan (cada fuente solo traía
+   las de su texto original). Las toma de `public/game/translations/fonts/<fuente>.ttf` o de la fuente instalada.
+2. `scripts/swf/HideElements.java`: oculta botones de compras con dinero real (los deja vacíos para no romper
+   el código del juego).
+3. Traduce los textos con el diccionario local `public/game/translations/swf-es.json` y los importa con JPEXS.
+
 ## Cómo se conecta el SWF (`app/modules/game/services/ruffle.ts`)
 
 El SWF original está hecho para la web de 2018: pide sus archivos a `http://localhost/…` y se conecta por
