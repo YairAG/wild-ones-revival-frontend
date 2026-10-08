@@ -40,6 +40,10 @@ public class RedrawLabels {
         widen(swf, args[2], args[i].split("\\*"));
         continue;
       }
+      if (args[i].contains("@")) {
+        lengthenRow(swf, args[2], args[i]);
+        continue;
+      }
       String[] pair = args[i].split("=", 2);
       String svg = Files.readString(Path.of(args[2], pair[0] + ".svg"));
 
@@ -75,6 +79,47 @@ public class RedrawLabels {
   static void widen(SWF swf, String svgDir, String[] idFactor) throws Exception {
     importAt(swf, idFactor[0], Files.readString(Path.of(svgDir, idFactor[0] + ".svg")), Double.parseDouble(idFactor[1]));
     System.out.println(idFactor[0] + ": " + idFactor[1] + " veces más ancho");
+  }
+
+  // "<id>@<y0>:<y1>+<dx>,<y0>:<y1>+<dx>...": cuando un dibujo junta varios fondos (uno por renglón), alarga
+  // solo los que están entre y0 e y1 (px): su mitad derecha se corre dx px a la derecha. Las figuras empiezan
+  // con "M"
+  static void lengthenRow(SWF swf, String svgDir, String arg) throws Exception {
+    String id = arg.substring(0, arg.indexOf('@'));
+    String svg = Files.readString(Path.of(svgDir, id + ".svg"));
+    for (String row : arg.substring(arg.indexOf('@') + 1).split(",")) {
+      Matcher a = Pattern.compile("(-?[\\d.]+):(-?[\\d.]+)\\+([\\d.]+)").matcher(row);
+      if (!a.matches()) throw new IllegalArgumentException(row);
+      svg = lengthen(svg, Double.parseDouble(a.group(1)), Double.parseDouble(a.group(2)), Double.parseDouble(a.group(3)));
+      System.out.println(id + ": fondo entre y=" + a.group(1) + " y " + a.group(2) + " alargado " + a.group(3) + " px");
+    }
+    importAt(swf, id, svg, 1);
+  }
+
+  static String lengthen(String svg, double y0, double y1, double dx) {
+    Matcher p = Pattern.compile("<path d=\"([^\"]+)\"").matcher(svg);
+    StringBuilder result = new StringBuilder();
+    while (p.find()) {
+      StringBuilder d = new StringBuilder();
+      for (String figure : p.group(1).split("(?=M)")) {
+        Rectangle2D b = bounds(figure);
+        boolean inRow = b.getMinY() >= y0 && b.getMaxY() <= y1;
+        Matcher n = NUMBER.matcher(figure);
+        StringBuilder moved = new StringBuilder();
+        boolean x = true;
+        while (n.find()) {
+          double v = Double.parseDouble(n.group());
+          if (x && inRow && v > b.getCenterX()) v += dx;
+          n.appendReplacement(moved, String.format(Locale.ROOT, "%.2f", v));
+          x = !x;
+        }
+        n.appendTail(moved);
+        d.append(moved);
+      }
+      p.appendReplacement(result, Matcher.quoteReplacement("<path d=\"" + d + "\""));
+    }
+    p.appendTail(result);
+    return result.toString();
   }
 
   // Importa el SVG al dibujo sin moverlo. El SVG exportado lleva las figuras en sus coordenadas reales y una

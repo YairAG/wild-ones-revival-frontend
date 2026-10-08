@@ -39,19 +39,23 @@ const FULL_CHINESE_ROCKS = "88";
 // "Get MORE" de la barra de arriba y "GET MORE TREATS" de la ventana de "no te alcanza"
 const HIDDEN = [1453, 1433, 219, 378, 562];
 
-// Fuentes "Chinese Rocks" (la de los menús): solo tiene mayúsculas, así que sus textos van en mayúsculas
-// Palabras del menú lateral que son dibujos (no texto), por id del dibujo: la versión al pasar el mouse y la
-// seleccionada. Y sus fondos, que se estiran para que quepa la palabra nueva (veces más anchos)
+// Palabras del menú lateral que son dibujos (no texto), por id del dibujo: la versión al pasar el mouse, la
+// seleccionada y la de la pantalla de inicio (206 y 208)
 const LABELS: Record<string, string> = {
   1436: "INICIO",
   1412: "INICIO",
   1449: "MULTIJUGADOR",
   1416: "MULTIJUGADOR",
+  208: "MULTIJUGADOR",
   1446: "TIENDA",
   1427: "TIENDA",
+  206: "TIENDA",
 };
-const LABEL_BACKGROUNDS: Record<string, number> = { 1410: 1.1, 1415: 1.115, 1426: 1.13 };
+// Sus fondos, que se alargan para que quepa la palabra nueva: "<id>*<veces más ancho>" o, si un dibujo junta
+// los fondos de varios renglones (el 195, en inicio), "<id>@<y0>:<y1>+<px>" por renglón (ver RedrawLabels.java)
+const LABEL_BACKGROUNDS = ["1410*1.1", "1415*1.115", "1426*1.13", "195@56:85+17,200:229+11"];
 
+// Fuentes "Chinese Rocks" (la de los menús): solo tiene mayúsculas, así que sus textos van en mayúsculas
 const UPPERCASE_FONTS = new Set([
   14, 61, 88, 182, 224, 306, 387, 418, 461, 515, 604, 681, 1195, 1223, 1325, 1465, 1479, 1949, 1983,
   2046,
@@ -115,7 +119,7 @@ writeFileSync(
 javaTool("ReplaceStrings", `${WORK}/2-hidden.swf`, `${WORK}/3-code.swf`, `${WORK}/code.tsv`);
 
 // 4: palabras dibujadas, con la Chinese Rocks completa (se exportan como SVG para quitar la palabra vieja)
-const shapes = [...Object.keys(LABELS), ...Object.keys(LABEL_BACKGROUNDS)];
+const shapes = [...Object.keys(LABELS), ...LABEL_BACKGROUNDS.map((arg) => arg.split(/[*@]/)[0])];
 ffdec(
   "-format",
   "shape:svg",
@@ -133,7 +137,7 @@ javaTool(
   `${WORK}/svg`,
   `${WORK}/fonts/Chinese Rocks.ttf`,
   ...Object.entries(LABELS).map(([id, word]) => `${id}=${word}`),
-  ...Object.entries(LABEL_BACKGROUNDS).map(([id, factor]) => `${id}*${factor}`),
+  ...LABEL_BACKGROUNDS,
 );
 
 // 5: textos fijos. Cada archivo exportado es "[límites]" seguido de renglones "[formato]texto"
