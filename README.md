@@ -32,13 +32,16 @@ Se copian a mano desde la carpeta `Web/` de [fgpons/wo-latin-ps](https://github.
 
 ### Traducción al español
 
-Los nombres y descripciones de armas, accesorios, regalos y comida están en los `.dat`. Se traducen con:
+Los nombres y descripciones de armas, accesorios, regalos y comida están en los `.dat`. Se arman con:
 
-    node scripts/translate-dat.ts
+    node scripts/build-dat.ts
 
 Lee los originales de `public/game/original-json/` (copia de los `.dat` sin tocar), aplica el diccionario
 `public/game/translations/es.json` y escribe en `public/game/assets/json/`. El diccionario es local como todo
 `public/game/` (tiene los textos originales); los textos nuevos se agregan vacíos para traducirlos.
+
+Ajuste temporal: con `ALL_PETS_AT_LEVEL_0` las 30 mascotas de `Pets.dat` se desbloquean en el nivel 0 (el
+original solo desbloqueaba 7 por nivel en `Levels.dat`).
 
 El resto de los textos (menús, botones, tutorial) están dentro del SWF. Se arma un `publicV1.swf` en español con:
 

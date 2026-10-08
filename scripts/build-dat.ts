@@ -1,6 +1,6 @@
-// Traduce los textos de los .dat del juego con un diccionario inglés → español.
-//   node scripts/translate-dat.ts
-// Lee los originales de public/game/original-json/ y escribe los traducidos en public/game/assets/json/.
+// Arma los .dat del juego: traduce sus textos con un diccionario inglés → español y aplica ajustes de datos.
+//   node scripts/build-dat.ts
+// Lee los originales de public/game/original-json/ y escribe el resultado en public/game/assets/json/.
 // El diccionario (public/game/translations/es.json) es local, como el resto de public/game/: tiene textos de
 // Playdom/Disney. Los textos que aún no estén en él se agregan vacíos ("") para traducirlos, y mientras
 // se dejan en inglés.
@@ -19,6 +19,11 @@ const FIELDS: Record<string, string[]> = {
   "PetFoods.dat": ["alt"],
   "Other.dat": ["text"],
 };
+
+// TEMPORAL (para probar): todas las mascotas de Pets.dat se desbloquean en el nivel 0. La tienda solo muestra
+// las que Levels.dat desbloquea en algún nivel ("chassis"), y el original solo tenía 7. Se quitará cuando haya
+// eventos de mascota nueva
+const ALL_PETS_AT_LEVEL_0 = true;
 
 const dictionary: Record<string, string> = existsSync(DICTIONARY)
   ? JSON.parse(readFileSync(DICTIONARY, "utf8"))
@@ -42,6 +47,15 @@ for (const [file, fields] of Object.entries(FIELDS)) {
   translate(data, fields);
   writeFileSync(`${OUTPUT}/${file}`, JSON.stringify(data, null, "\t"));
 }
+
+// Levels.dat: un objeto por nivel; "chassis" son las mascotas que desbloquea
+const levels = JSON.parse(readFileSync(`${ORIGINALS}/Levels.dat`, "utf8"));
+if (ALL_PETS_AT_LEVEL_0) {
+  const pets: { type: string }[] = JSON.parse(readFileSync(`${ORIGINALS}/Pets.dat`, "utf8"));
+  for (const level of levels) delete level.chassis;
+  levels[0].chassis = pets.map((pet) => pet.type);
+}
+writeFileSync(`${OUTPUT}/Levels.dat`, JSON.stringify(levels, null, "\t"));
 
 mkdirSync("public/game/translations", { recursive: true });
 writeFileSync(DICTIONARY, JSON.stringify(dictionary, null, 2));
