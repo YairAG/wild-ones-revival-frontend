@@ -20,6 +20,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,25 +50,26 @@ public class RedrawLabels {
       String[] pair = args[i].split("=", 2);
       String svg = Files.readString(Path.of(args[2], pair[0] + ".svg"));
 
-      // La palabra: la figura que empieza más a la derecha
+      // La palabra: la figura que empieza más a la derecha y las de su mismo color y altura parecida (a veces
+      // cada letra es una figura). Una figura del mismo color pero mucho más alta (un fondo) no cuenta
+      List<String[]> paths = new ArrayList<>(); // [figura completa, trazo, color]
       Matcher m = PATH.matcher(svg);
-      String wordPath = null;
-      String color = null;
+      while (m.find()) paths.add(new String[] {m.group(0), m.group(1), m.group(2)});
+      String[] last = paths.stream().max(Comparator.comparingDouble(p -> bounds(p[1]).getMinX())).orElseThrow();
+      double height = bounds(last[1]).getHeight();
       Rectangle2D wordBounds = null;
-      while (m.find()) {
-        Rectangle2D bounds = bounds(m.group(1));
-        if (wordBounds == null || bounds.getMinX() > wordBounds.getMinX()) {
-          wordPath = m.group(0);
-          color = m.group(2);
-          wordBounds = bounds;
-        }
+      for (String[] p : paths) {
+        Rectangle2D b = bounds(p[1]);
+        if (!p[2].equals(last[2]) || b.getHeight() > height * 1.5) continue;
+        wordBounds = wordBounds == null ? b : wordBounds.createUnion(b);
+        svg = svg.replace(p[0], "");
       }
 
       String newOutline = outline(font, pair[1], wordBounds);
-      String newPath = "<path d=\"" + newOutline + "\" fill=\"" + color + "\" stroke=\"none\"/>";
+      String newPath = "<path d=\"" + newOutline + "\" fill=\"" + last[2] + "\" stroke=\"none\"/>";
       System.out.printf(Locale.ROOT, "%s: la palabra terminaba en x=%.1f y ahora en x=%.1f (px)%n", pair[0],
           wordBounds.getMaxX(), bounds(newOutline).getMaxX());
-      importAt(swf, pair[0], svg.replace(wordPath, newPath), 1);
+      importAt(swf, pair[0], svg.replace("</g>", newPath + "</g>"), 1);
       System.out.println(pair[0] + ": " + pair[1]);
     }
 

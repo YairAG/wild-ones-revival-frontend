@@ -50,6 +50,7 @@ const LABELS: Record<string, string> = {
   1446: "TIENDA",
   1427: "TIENDA",
   206: "TIENDA",
+  932: "DIA", // calendario de la Mision Laser
 };
 // Fondos que se alargan para que quepa el texto en español: "<id>*<veces más ancho>" o "<id>@<y0>:<y1>+<px>"
 // por renglón (ver RedrawLabels.java). 195: etiquetas de inicio (MULTIJUGADOR, MIS MASCOTAS, TIENDA);
