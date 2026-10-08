@@ -8,6 +8,23 @@ const GAME_URL = import.meta.env.VITE_GAME_URL; // WebSocket del servidor de jue
 // Puerto TCP al que el SWF original intenta conectarse (está fijo dentro del SWF)
 const SWF_SERVER_PORT = 8000;
 
+// El SWF elige servidor según la URL desde la que se cargó (Common.initServerPath): localhost, unas IP fijas
+// o los dominios de los servidores privados de 2018. Todos se redirigen a nuestros servidores.
+const SWF_KNOWN_HOSTS = [
+  "localhost",
+  "127.0.0.1",
+  "25.7.72.108",
+  "107.175.80.140",
+  "beta-heroes.tk",
+  "betaheroes.tk",
+  "wildheroes.pw",
+  "nuke.mice.ninja",
+  "wildones.pw",
+  "www.wildones.pw",
+];
+
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 /** Agrega el script de Ruffle a la página (una sola vez) */
 function loadRuffleScript(): Promise<void> {
   if (window.RufflePlayer?.newest) return Promise.resolve();
@@ -27,14 +44,21 @@ export function gameConfig(dname: string, token: string): RuffleConfig {
     url: `${origin}/game/publicV1.swf`,
     // El SWF lee su login de estos parámetros; en snum va el JWT (el servidor lo acepta ahí)
     parameters: { dname, snum: token, net: "M" },
-    // El SWF pide sus archivos a http://localhost/...: se sirven desde public/game/
+    // Sus archivos se sirven desde public/game/:
     urlRewriteRules: [
-      [/^https?:\/\/(?:localhost|127\.0\.0\.1)(?::80)?\/(.*)$/, `${origin}/game/$1`],
+      // 1. Pedidos a los servidores conocidos del SWF (sin puerto o puerto 80)
+      [
+        new RegExp(`^https?://(?:${SWF_KNOWN_HOSTS.map(escapeRegExp).join("|")})(?::80)?/(.*)$`),
+        `${origin}/game/$1`,
+      ],
+      // 2. Pedidos a esta misma web fuera de /game/ (p. ej. "../assets/...")
+      [new RegExp(`^${escapeRegExp(origin)}/((?:assets|images)/.*)$`), `${origin}/game/$1`],
     ],
-    socketProxy: [
-      { host: "localhost", port: SWF_SERVER_PORT, proxyUrl: GAME_URL },
-      { host: "127.0.0.1", port: SWF_SERVER_PORT, proxyUrl: GAME_URL },
-    ],
+    socketProxy: SWF_KNOWN_HOSTS.map((host) => ({
+      host,
+      port: SWF_SERVER_PORT,
+      proxyUrl: GAME_URL,
+    })),
     autoplay: "on",
     unmuteOverlay: "hidden",
     letterbox: "on",
