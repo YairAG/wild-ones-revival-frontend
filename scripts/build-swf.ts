@@ -124,10 +124,12 @@ for (const file of readdirSync(`${WORK}/texts`)) {
     if (translated !== text) {
       changed = true;
       if (UPPERCASE_FONTS.has(font)) translated = translated.toUpperCase();
-      // El espaciado entre letras era para el texto original
+      // El espaciado entre letras era para el texto original (y compensaba que la fuente no tenía medidas,
+      // ver AddGlyphs.java): se quita y el espaciado general vuelve a 0
       format = format
         .split(newline)
         .filter((line) => !/^spacing(pair)? /.test(line))
+        .map((line) => line.replace(/^letterspacing .*/, "letterspacing 0"))
         .join(newline);
     }
     result += `[${format}]${escape(translated)}`;

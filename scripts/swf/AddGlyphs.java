@@ -6,6 +6,10 @@
 // La forma de cada letra nueva sale de un archivo <nombre de la fuente>.ttf en la carpeta de fuentes (si está),
 // si no de la fuente instalada en Windows con ese nombre y, si tampoco, de Arial.
 import com.jpexs.decompiler.flash.SWF;
+import com.jpexs.decompiler.flash.tags.DefineFont3Tag;
+import com.jpexs.decompiler.flash.types.RECT;
+import java.util.ArrayList;
+import java.util.Collections;
 import com.jpexs.decompiler.flash.tags.base.CharacterTag;
 import com.jpexs.decompiler.flash.tags.base.FontTag;
 import java.awt.Font;
@@ -33,6 +37,17 @@ public class AddGlyphs {
       int added = 0;
       for (char c : CHARS.toCharArray()) {
         if (!font.containsChar(c) && source.canDisplay(c) && font.addCharacter(c, source)) added++;
+      }
+      // Sin "layout" la fuente no sabe cuánto avanza cada letra y el texto nuevo queda mal espaciado:
+      // se le ponen los avances de la fuente de origen
+      if (!font.hasLayout() && font instanceof DefineFont3Tag font3) {
+        int glyphs = font3.glyphShapeTable.size();
+        font3.fontAdvanceTable = new ArrayList<>(Collections.nCopies(glyphs, 0));
+        font3.fontBoundsTable = new ArrayList<>();
+        for (int i = 0; i < glyphs; i++) font3.fontBoundsTable.add(new RECT());
+        font3.fontKerningTable = new ArrayList<>();
+        font3.setHasLayout(true);
+        font3.setAdvanceValues(source);
       }
       System.out.println(font.getCharacterId() + " " + font.getFontNameIntag() + ": +" + added + " letras (de "
           + source.getFontName() + ")");
