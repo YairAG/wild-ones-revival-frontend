@@ -1,7 +1,8 @@
 // Arma el SWF del juego en español a partir del original, siempre desde cero:
 //   1. agrega a las fuentes las letras que les faltan (acentos, ñ...)    → swf/AddGlyphs.java
 //   2. oculta botones de Facebook y de compras                            → swf/HideElements.java
-//   3. traduce los textos con el diccionario e importa el resultado      → JPEXS (-export / -importText)
+//   3. traduce los textos que pone el código ("unlock at level "...)     → swf/ReplaceStrings.java
+//   4. traduce los textos fijos con el diccionario e importa el resultado → JPEXS (-export / -importText)
 //
 //   node scripts/build-swf.ts
 //
@@ -15,7 +16,11 @@ const GAME = "public/game";
 const ORIGINAL = `${GAME}/original-publicV1.swf`; // el SWF sin tocar
 const OUTPUT = `${GAME}/publicV1.swf`; // el que carga Ruffle
 const WORK = `${GAME}/translations/build`;
-const DICTIONARY = `${GAME}/translations/swf-es.json`; // renglón en inglés → renglón en español
+// Textos fijos: renglón en inglés → renglón en español. "#<id> renglón" traduce distinto solo en ese texto
+// (p. ej. cuando no cabe)
+const DICTIONARY = `${GAME}/translations/swf-es.json`;
+// Textos del código: cadena exacta → cadena en español. Se llena a mano (ver ReplaceStrings.java)
+const CODE_DICTIONARY = `${GAME}/translations/code-es.json`;
 const FONTS = `${GAME}/translations/fonts`; // <nombre de la fuente>.ttf para las letras nuevas
 
 // Botones y sprites a ocultar (ids dentro del SWF): GET TREATS del menú (normal y seleccionado), su etiqueta,
@@ -40,10 +45,11 @@ const escape = (text: string) => text.replace(/([[\]\\])/g, "\\$1");
 
 // Traduce un renglón. Si trae HTML (campos de texto editables), solo el texto entre etiquetas.
 // Lo que no tiene palabras (números, letras sueltas como "A" o "D") se deja igual
-function translate(text: string): string {
+function translate(text: string, id: string): string {
   if (text.startsWith("<"))
-    return text.replace(/>([^<]+)</g, (_, inner: string) => `>${translate(inner)}<`);
+    return text.replace(/>([^<]+)</g, (_, inner: string) => `>${translate(inner, id)}<`);
   if (!/[a-z]{2,}/i.test(text)) return text;
+  if (dictionary[`#${id} ${text}`]) return dictionary[`#${id} ${text}`];
   dictionary[text] ??= "";
   return dictionary[text] || text;
 }
@@ -56,7 +62,21 @@ mkdirSync(`${WORK}/import/texts`, { recursive: true });
 javaTool("AddGlyphs", ORIGINAL, `${WORK}/1-glyphs.swf`, FONTS);
 javaTool("HideElements", `${WORK}/1-glyphs.swf`, `${WORK}/2-hidden.swf`, HIDDEN.join(","));
 
-// 3: traducir. Cada archivo exportado es "[límites]" seguido de renglones "[formato]texto"
+// 3: textos del código, como lista "original<TAB>nuevo" (saltos de línea como \n)
+const codeDictionary: Record<string, string> = existsSync(CODE_DICTIONARY)
+  ? JSON.parse(readFileSync(CODE_DICTIONARY, "utf8"))
+  : {};
+const tsvEscape = (text: string) => text.replace(/\n/g, "\\n").replace(/\t/g, "\\t");
+writeFileSync(
+  `${WORK}/code.tsv`,
+  Object.entries(codeDictionary)
+    .map(([from, to]) => `${tsvEscape(from)}\t${tsvEscape(to)}`)
+    .join("\n"),
+  "utf8",
+);
+javaTool("ReplaceStrings", `${WORK}/2-hidden.swf`, `${WORK}/3-code.swf`, `${WORK}/code.tsv`);
+
+// 4: textos fijos. Cada archivo exportado es "[límites]" seguido de renglones "[formato]texto"
 ffdec("-format", "text:formatted", "-export", "text", `${WORK}/texts`, ORIGINAL);
 const dictionary: Record<string, string> = existsSync(DICTIONARY)
   ? JSON.parse(readFileSync(DICTIONARY, "utf8"))
@@ -75,7 +95,7 @@ for (const file of readdirSync(`${WORK}/texts`)) {
     let format = parts[i];
     const text = unescape(parts[i + 1] ?? "");
     font = Number(/font (\d+)/.exec(format)?.[1] ?? font); // la fuente se hereda del renglón anterior
-    let translated = translate(text);
+    let translated = translate(text, file.replace(".txt", ""));
     if (translated !== text) {
       changed = true;
       if (UPPERCASE_FONTS.has(font)) translated = translated.toUpperCase();
@@ -91,7 +111,7 @@ for (const file of readdirSync(`${WORK}/texts`)) {
 }
 
 writeFileSync(DICTIONARY, JSON.stringify(dictionary, null, 2));
-ffdec("-importText", `${WORK}/2-hidden.swf`, OUTPUT, `${WORK}/import`);
+ffdec("-importText", `${WORK}/3-code.swf`, OUTPUT, `${WORK}/import`);
 
 const missing = Object.values(dictionary).filter((text) => !text).length;
 console.log(
