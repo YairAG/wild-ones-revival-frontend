@@ -36,8 +36,9 @@ const CODE_DICTIONARY = `${GAME}/translations/code-es.json`;
 const FULL_CHINESE_ROCKS = "88";
 
 // Botones y sprites a ocultar (ids dentro del SWF): GET TREATS del menú (normal y seleccionado), su etiqueta,
-// "Get MORE" de la barra de arriba y "GET MORE TREATS" de la ventana de "no te alcanza"
-const HIDDEN = [1453, 1433, 219, 378, 562];
+// "Get MORE" de la barra de arriba y "GET MORE TREATS" de la ventana de "no te alcanza". Y los botones del
+// encabezado: SEND GIFTS, HELP, FORUM e INVITE (eran de Facebook y de la web de 2013)
+const HIDDEN = [1453, 1433, 219, 378, 562, 257, 248, 251, 254];
 
 // Palabras del menú lateral que son dibujos (no texto), por id del dibujo: la versión al pasar el mouse, la
 // seleccionada y la de la pantalla de inicio (206 y 208)
