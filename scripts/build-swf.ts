@@ -51,9 +51,16 @@ const LABELS: Record<string, string> = {
   1427: "TIENDA",
   206: "TIENDA",
 };
-// Sus fondos, que se alargan para que quepa la palabra nueva: "<id>*<veces más ancho>" o, si un dibujo junta
-// los fondos de varios renglones (el 195, en inicio), "<id>@<y0>:<y1>+<px>" por renglón (ver RedrawLabels.java)
-const LABEL_BACKGROUNDS = ["1410*1.1", "1415*1.115", "1426*1.13", "195@56:85+17,200:229+11"];
+// Fondos que se alargan para que quepa el texto en español: "<id>*<veces más ancho>" o "<id>@<y0>:<y1>+<px>"
+// por renglón (ver RedrawLabels.java). 195: etiquetas de inicio (MULTIJUGADOR, MIS MASCOTAS, TIENDA);
+// 1370: caja de "SE DESBLOQUEA EN NIVEL"
+const LABEL_BACKGROUNDS = [
+  "1410*1.1",
+  "1415*1.115",
+  "1426*1.13",
+  "195@56:85+17,152:181+38,200:229+11",
+  "1370@-1:52+45",
+];
 
 // Fuentes "Chinese Rocks" (la de los menús): solo tiene mayúsculas, así que sus textos van en mayúsculas
 const UPPERCASE_FONTS = new Set([
