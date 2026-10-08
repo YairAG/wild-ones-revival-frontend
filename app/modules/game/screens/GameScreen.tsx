@@ -2,6 +2,9 @@
 import { useNavigate } from "react-router";
 import { ErrorMessage } from "@/components/ErrorMessage";
 import { useAuthStore } from "@/modules/auth/store";
+import { ChangelogPanel } from "@/modules/changelog/components/ChangelogPanel";
+import { GlobalChatPanel } from "@/modules/chat/components/GlobalChatPanel";
+import { FriendsPanel } from "@/modules/friends/components/FriendsPanel";
 import { useGameStore } from "../store";
 
 // Ref de callback: React la llama cuando el div aparece y la función que devuelve cuando se va.
@@ -36,11 +39,16 @@ export function GameScreen() {
       </header>
       <ErrorMessage message={error} />
       <div className="flex min-h-0 flex-1">
-        {/* Paneles nuestros a los lados del juego (por ahora vacíos) */}
-        <aside className="min-w-0 flex-1" />
+        {/* Paneles nuestros a los lados del juego (maquetas por ahora) */}
+        <aside className="flex min-w-0 flex-1 flex-col gap-3 p-3">
+          <ChangelogPanel />
+          <GlobalChatPanel />
+        </aside>
         {/* El escenario del SWF mide 760 x 740: el reproductor tiene esa proporción y toda la altura */}
         <div ref={gameContainer} className="aspect-[760/740] h-full max-w-full bg-[#B2D2F6]" />
-        <aside className="min-w-0 flex-1" />
+        <aside className="flex min-w-0 flex-1 flex-col p-3">
+          <FriendsPanel />
+        </aside>
       </div>
     </main>
   );
