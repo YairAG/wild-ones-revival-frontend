@@ -9,7 +9,15 @@
 // Necesita Java y JPEXS FFDec (carpeta en FFDEC_DIR; por defecto C:/Program Files (x86)/FFDec).
 // Todo lo de public/game/ es local (archivos de Playdom/Disney), también el diccionario.
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { withoutAccents } from "./without-accents.ts";
 
 const FFDEC_DIR = process.env.FFDEC_DIR ?? "C:/Program Files (x86)/FFDec";
@@ -22,7 +30,9 @@ const WORK = `${GAME}/translations/build`;
 const DICTIONARY = `${GAME}/translations/swf-es.json`;
 // Textos del código: cadena exacta → cadena en español. Se llena a mano (ver ReplaceStrings.java)
 const CODE_DICTIONARY = `${GAME}/translations/code-es.json`;
-const FONTS = `${GAME}/translations/fonts`; // <nombre de la fuente>.ttf para las letras nuevas
+// Copia de "Chinese Rocks" (la fuente de los menús) que trae todas las mayúsculas. Las demás copias solo traen
+// las letras de su texto, así que las que les faltan se toman de esta (se exporta del mismo SWF)
+const FULL_CHINESE_ROCKS = "88";
 
 // Botones y sprites a ocultar (ids dentro del SWF): GET TREATS del menú (normal y seleccionado), su etiqueta,
 // "Get MORE" de la barra de arriba y "GET MORE TREATS" de la ventana de "no te alcanza"
@@ -60,7 +70,21 @@ rmSync(WORK, { recursive: true, force: true });
 mkdirSync(`${WORK}/import/texts`, { recursive: true });
 
 // 1 y 2: letras nuevas y elementos ocultos
-javaTool("AddGlyphs", ORIGINAL, `${WORK}/1-glyphs.swf`, FONTS);
+ffdec(
+  "-format",
+  "font:ttf",
+  "-selectid",
+  FULL_CHINESE_ROCKS,
+  "-export",
+  "font",
+  `${WORK}/fonts`,
+  ORIGINAL,
+);
+renameSync(
+  `${WORK}/fonts/${FULL_CHINESE_ROCKS}_Chinese Rocks.ttf`,
+  `${WORK}/fonts/Chinese Rocks.ttf`,
+);
+javaTool("AddGlyphs", ORIGINAL, `${WORK}/1-glyphs.swf`, `${WORK}/fonts`);
 javaTool("HideElements", `${WORK}/1-glyphs.swf`, `${WORK}/2-hidden.swf`, HIDDEN.join(","));
 
 // 3: textos del código, como lista "original<TAB>nuevo" (saltos de línea como \n)

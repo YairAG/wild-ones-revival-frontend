@@ -49,7 +49,8 @@ Parte siempre de `public/game/original-publicV1.swf` (copia del SWF sin tocar) y
 `C:/Program Files (x86)/FFDec`):
 
 1. `scripts/swf/AddGlyphs.java`: agrega a las fuentes del SWF las letras que les faltan (cada fuente solo traía
-   las de su texto original). Las toma de `public/game/translations/fonts/<fuente>.ttf` o de la fuente instalada.
+   las de su texto original). Las de los menús salen de la copia completa de "Chinese Rocks" que trae el mismo SWF (se exporta como .ttf);
+   las demás, de la fuente instalada en Windows con ese nombre.
 2. `scripts/swf/HideElements.java`: oculta botones de compras con dinero real (los deja vacíos para no romper
    el código del juego).
 3. `scripts/swf/ReplaceStrings.java`: traduce los textos que pone el código del juego (p. ej. "unlock at level ")
