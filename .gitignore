@@ -2,3 +2,6 @@ node_modules/
 dist/
 .env
 .claude/
+
+# Cliente y gráficos originales del juego (Playdom/Disney). Solo en local, nunca en el repo.
+public/game/

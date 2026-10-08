@@ -1,13 +1,13 @@
 # wild-ones-revival-frontend
 
-Cliente web de Wild Ones Revival: login, lobby, tienda y partidas en tiempo real por WebSocket.
-React + PixiJS + Tailwind + Zustand.
+Cliente web de Wild Ones Revival. Hace el login (registro y entrada) y luego carga el **cliente original del
+juego** (SWF) con [Ruffle](https://ruffle.rs), conectado a nuestros servidores.
 
 Habla con dos servidores:
 
 - [wildones-accounts](https://github.com/YairAG/wildones-accounts): registro y login (HTTP). Devuelve un JWT.
-- [Wild-Ones-Revival](https://github.com/YairAG/Wild-Ones-Revival): el servidor de juego (WebSocket). Se entra
-  con ese JWT. El protocolo está tipado en el paquete [`wildones-protocol`](https://www.npmjs.com/package/wildones-protocol).
+- [Wild-Ones-Revival](https://github.com/YairAG/Wild-Ones-Revival): el servidor de juego (WebSocket). El SWF
+  entra con ese JWT.
 
 ## Arrancar
 
@@ -16,7 +16,30 @@ Habla con dos servidores:
     pnpm dev               # http://localhost:5173
     pnpm test
 
-Necesita el backend de cuentas y el servidor de juego corriendo (ver sus README).
+Necesita el backend de cuentas, el servidor de juego y los archivos del cliente original (abajo).
+
+## Archivos del cliente original (`public/game/`)
+
+El SWF y sus gráficos **no están en el repo** (son de Playdom/Disney; `public/game/` está en `.gitignore`).
+Se copian a mano desde la carpeta `Web/` de [fgpons/wo-latin-ps](https://github.com/fgpons/wo-latin-ps):
+
+| Origen (`wo-latin-ps/Web/`)      | Destino                    |
+| -------------------------------- | -------------------------- |
+| `privatewolswf/publicV1.swf`     | `public/game/publicV1.swf` |
+| `assets/*.swf`                   | `public/game/assets/`      |
+| `images/` (carpeta entera)       | `public/game/images/`      |
+| los `.dat` (`assets/json/*.dat`) | `public/game/assets/json/` |
+
+## Cómo se conecta el SWF (`app/modules/game/services/ruffle.ts`)
+
+El SWF original está hecho para la web de 2018: pide sus archivos a `http://localhost/…` y se conecta por
+socket a `localhost:8000`. Ruffle lo redirige sin tocar el SWF:
+
+- `urlRewriteRules`: `http://localhost/…` → `/game/…` (los archivos de `public/game/`).
+- `socketProxy`: `localhost:8000` → el WebSocket del servidor de juego (`VITE_GAME_URL`). No hace falta
+  `websockify`.
+- Login: el SWF lee `dname` y `snum` de sus parámetros. En `snum` se le pasa el JWT, y el servidor de juego lo
+  acepta ahí.
 
 ## Estructura
 
@@ -27,28 +50,17 @@ app/
   main.tsx               punto de entrada
   modules/
     auth/                entrar y crear cuenta
-      screens/           pantallas (AuthScreen)
-      components/        partes de la pantalla (AuthForm)
-      services/          llamadas al backend de cuentas
-      store.ts           estado (Zustand): sesión, modo, errores
-      types.ts
-    lobby/               el lobby del servidor de juego
-      screens/ · components/ · store.ts · types.ts
+      screens/ · components/ · services/ (backend de cuentas) · store.ts · types.ts
+    game/                el juego original en Ruffle
+      screens/GameScreen.tsx · services/ruffle.ts · store.ts · types.ts
   components/            UI reutilizable (Button, TextInput, ErrorMessage)
-  services/              conexión con el servidor de juego (game-socket.ts), usada por varios módulos
-  routes/                rutas (React Router) y loaders: protegen rutas y abren conexiones
-  hooks/                 hooks reutilizables (si hacen falta)
-  utils/                 funciones sueltas
+  services/              servicios compartidos entre módulos
+  routes/                rutas (React Router) y loaders (protegen rutas)
+  hooks/ · utils/
 ```
 
 **Estado con Zustand:** el estado y sus acciones viven en el `store.ts` de cada módulo. Los componentes solo
-leen (`useLobbyStore((s) => s.player)`) y llaman acciones. Las conexiones se abren desde los _loaders_ de las
-rutas, no con `useEffect`.
-
-**Para agregar algo nuevo:**
-
-- A un módulo que ya existe: su pantalla en `screens/`, sus partes en `components/`, su estado en `store.ts`.
-- Un módulo nuevo (p. ej. tienda): carpeta `app/modules/shop/` con lo mismo, y su ruta en `routes/index.tsx`.
+leen y llaman acciones.
 
 ## Variables (`.env`)
 
