@@ -29,32 +29,43 @@ export function GameScreen() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col xl:h-screen">
-      <header className="flex items-center justify-between bg-stone-900 px-4 py-2">
-        <h1 className="font-bold text-amber-400">Wild Ones Revival</h1>
-        <span className="text-sm text-stone-400">{session?.dname}</span>
-        <button onClick={exit} className="text-sm text-stone-400 hover:text-white">
-          Salir
-        </button>
+    <div className="flex min-h-screen flex-col xl:h-screen">
+      <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b-[3px] border-sky-deep bg-sky px-5">
+        <span className="logo text-3xl">Wild Revival</span>
+        <nav className="flex items-center gap-3">
+          {/* Avatar con las iniciales y el nombre */}
+          <span className="flex items-center gap-2.5 text-white">
+            <span className="flex size-9 items-center justify-center rounded border-2 border-wood bg-sand text-[13px] font-extrabold text-wood">
+              {session?.dname.slice(0, 2).toUpperCase()}
+            </span>
+            <span className="text-[15px] font-extrabold">{session?.dname}</span>
+          </span>
+          <button
+            onClick={exit}
+            className="h-10 rounded bg-sky-deep px-3.5 text-sm font-extrabold text-white"
+          >
+            Cerrar sesión
+          </button>
+        </nav>
       </header>
       <ErrorMessage message={error} />
-      {/* Pantalla ancha (xl): paneles | juego | paneles, sin scroll.
+      {/* Pantalla ancha (xl): amigos y notas | juego | chat, sin scroll.
           Más angosta: el juego arriba y los paneles abajo (en dos columnas desde md), con scroll de página */}
-      <div className="grid md:grid-cols-2 xl:flex xl:min-h-0 xl:flex-1">
-        <aside className="flex h-[32rem] min-w-0 flex-col gap-3 p-3 xl:h-auto xl:flex-1">
+      <main className="grid gap-4 p-4 md:grid-cols-2 xl:flex xl:min-h-0 xl:flex-1">
+        <aside className="flex h-[32rem] min-w-0 flex-col gap-4 xl:h-auto xl:flex-1">
+          <FriendsPanel />
           <ChangelogPanel />
-          <GlobalChatPanel />
         </aside>
         {/* El escenario del SWF mide 760 x 740: el reproductor tiene esa proporción. En xl usa toda la altura;
-            si no, todo el ancho, pero sin pasar del alto de la ventana (menos el encabezado) */}
+            si no, todo el ancho, pero sin pasar del alto de la ventana (menos el encabezado y márgenes) */}
         <div
           ref={gameContainer}
-          className="order-first mx-auto aspect-[760/740] w-[min(100%,calc((100svh_-_2.5rem)*760/740))] bg-[#B2D2F6] md:col-span-2 xl:order-none xl:mx-0 xl:h-full xl:w-auto xl:max-w-full"
+          className="order-first mx-auto aspect-[760/740] w-[min(100%,calc((100svh_-_7rem)*760/740))] overflow-hidden rounded-md border-[3px] border-sky-deep bg-game shadow-[0_5px_0_var(--color-sky-deep)] md:col-span-2 xl:order-none xl:mx-0 xl:h-full xl:w-auto xl:max-w-full"
         />
-        <aside className="flex h-[32rem] min-w-0 flex-col p-3 xl:h-auto xl:flex-1">
-          <FriendsPanel />
+        <aside className="flex h-[32rem] min-w-0 flex-col xl:h-auto xl:flex-1">
+          <GlobalChatPanel />
         </aside>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

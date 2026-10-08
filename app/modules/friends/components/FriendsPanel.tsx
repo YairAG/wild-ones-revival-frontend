@@ -6,34 +6,45 @@ export function FriendsPanel() {
 
   return (
     <Panel
-      title={`Amigos (${online}/${friends.length} en línea)`}
+      title="Amigos"
+      badge={<span className="text-[13px] font-extrabold text-sky">En línea · {online}</span>}
       footer={
-        <div className="flex gap-2">
+        <>
+          <label htmlFor="agregar-amigo" className="sr-only">
+            Nombre del jugador
+          </label>
           <input
+            id="agregar-amigo"
             disabled
             placeholder="Nombre del jugador"
-            className="min-w-0 flex-1 rounded border border-stone-600 bg-stone-800 px-2 py-1 text-sm text-white"
+            className="h-11 min-w-0 flex-1 rounded border-2 border-line bg-field px-3 text-sm placeholder:text-disabled"
           />
           <button
             disabled
-            className="rounded bg-amber-600 px-3 text-sm font-semibold text-white opacity-50"
+            className="h-11 rounded border-2 border-sky-deep bg-sky px-3.5 text-sm font-extrabold text-white disabled:opacity-60"
           >
             Agregar
           </button>
-        </div>
+        </>
       }
     >
       {requests.length > 0 && (
-        <div className="mb-3">
-          <h3 className="mb-1 text-xs font-semibold text-stone-500 uppercase">Solicitudes</h3>
+        <div className="mb-3 flex flex-col">
+          <h3 className="mb-1 text-xs font-extrabold text-muted uppercase">Solicitudes</h3>
           {requests.map((request) => (
-            <div key={request.id} className="flex items-center justify-between py-1 text-sm">
-              <span className="text-white">{request.dname}</span>
-              <span className="flex gap-2">
-                <button disabled className="text-green-400">
+            <div key={request.id} className="flex min-h-11 items-center justify-between gap-2">
+              <span className="text-[15px] font-bold">{request.dname}</span>
+              <span className="flex gap-1.5">
+                <button
+                  disabled
+                  className="h-8 rounded border-2 border-line bg-panel px-2.5 text-xs font-extrabold text-sky-deep"
+                >
                   Aceptar
                 </button>
-                <button disabled className="text-stone-400">
+                <button
+                  disabled
+                  className="h-8 rounded border-2 border-line bg-panel px-2.5 text-xs font-extrabold text-muted"
+                >
                   Rechazar
                 </button>
               </span>
@@ -42,14 +53,22 @@ export function FriendsPanel() {
         </div>
       )}
 
-      <h3 className="mb-1 text-xs font-semibold text-stone-500 uppercase">Amigos</h3>
+      <h3 className="mb-1 text-xs font-extrabold text-muted uppercase">Amigos</h3>
       {friends.map((friend) => (
-        <div key={friend.id} className="flex items-center gap-2 py-1 text-sm">
+        <div key={friend.id} className="flex min-h-11 items-center gap-2.5">
           <span
-            className={`size-2 rounded-full ${friend.online ? "bg-green-400" : "bg-stone-600"}`}
+            className={`size-2.5 shrink-0 rounded-full ${friend.online ? "bg-ok" : "bg-[#c3cdd2]"}`}
           />
-          <span className="flex-1 text-white">{friend.dname}</span>
-          <span className="text-xs text-stone-500">Nivel {friend.level}</span>
+          <span className="flex min-w-0 flex-1 flex-col leading-tight">
+            <span
+              className={`truncate text-[15px] font-bold ${friend.online ? "text-ink" : "text-faint"}`}
+            >
+              {friend.dname}
+            </span>
+            <span className="text-xs font-semibold text-muted">
+              {friend.online ? "En línea" : "Desconectado"} · Nivel {friend.level}
+            </span>
+          </span>
         </div>
       ))}
     </Panel>

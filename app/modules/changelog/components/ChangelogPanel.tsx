@@ -3,18 +3,25 @@ import { releases } from "../mocks";
 
 export function ChangelogPanel() {
   return (
-    <Panel title="Notas de cambios">
-      {releases.map((release) => (
-        <article key={release.date} className="mb-4">
-          <p className="text-xs text-stone-500">{release.date}</p>
-          <h3 className="font-semibold text-white">{release.title}</h3>
-          <ul className="mt-1 list-disc pl-4 text-sm text-stone-300">
-            {release.changes.map((change) => (
-              <li key={change}>{change}</li>
-            ))}
-          </ul>
-        </article>
-      ))}
+    <Panel title="Notas de parche">
+      <div className="flex flex-col gap-3">
+        {releases.map((release, i) => (
+          <article key={release.date} className="flex flex-col gap-1">
+            {i > 0 && <div className="mb-2 h-0.5 bg-divider" />}
+            <div className="flex items-baseline justify-between gap-2">
+              <h3 className="text-[15px] font-extrabold">{release.title}</h3>
+              <span className="text-xs font-semibold whitespace-nowrap text-muted">
+                {release.date}
+              </span>
+            </div>
+            <ul className="list-disc pl-4.5 text-sm leading-relaxed text-body">
+              {release.changes.map((change) => (
+                <li key={change}>{change}</li>
+              ))}
+            </ul>
+          </article>
+        ))}
+      </div>
     </Panel>
   );
 }

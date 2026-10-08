@@ -7,6 +7,7 @@ import { useAuthStore } from "../store";
 
 export function AuthForm({ onSuccess }: { onSuccess(): void }) {
   const { mode, submit, loading, error } = useAuthStore();
+  const isLogin = mode === "login";
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -14,20 +15,30 @@ export function AuthForm({ onSuccess }: { onSuccess(): void }) {
     if (await submit(String(form.get("dname")), String(form.get("password")))) onSuccess();
   }
 
+  // Al registrarse se muestran las reglas que valida el backend de cuentas
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <TextInput label="Nombre" name="dname" autoComplete="username" required />
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <TextInput
+        label="Usuario"
+        name="dname"
+        autoComplete="username"
+        required
+        hint={isLogin ? undefined : "Entre 3 y 16 caracteres: letras, números y guion bajo."}
+      />
       <TextInput
         label="Contraseña"
         name="password"
         type="password"
-        autoComplete={mode === "login" ? "current-password" : "new-password"}
+        autoComplete={isLogin ? "current-password" : "new-password"}
         required
+        hint={isLogin ? undefined : "Mínimo 8 caracteres."}
       />
       <ErrorMessage message={error} />
-      <Button type="submit" disabled={loading}>
-        {mode === "login" ? "Entrar" : "Crear cuenta"}
-      </Button>
+      <div className="mt-1">
+        <Button type="submit" disabled={loading}>
+          {isLogin ? "Jugar" : "Crear y jugar"}
+        </Button>
+      </div>
     </form>
   );
 }
