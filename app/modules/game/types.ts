@@ -7,6 +7,8 @@ export type RuffleConfig = {
   socketProxy?: { host: string; port: number; proxyUrl: string }[];
   // [patrón, reemplazo]: cambia las URLs que pide el SWF (p. ej. http://localhost/... → /game/...)
   urlRewriteRules?: [RegExp | string, string][];
+  // Motor de dibujado; por defecto Ruffle elige el primero que funcione (webgpu, wgpu-webgl, webgl, canvas)
+  preferredRenderer?: "webgpu" | "wgpu-webgl" | "webgl" | "canvas";
   autoplay?: "auto" | "on" | "off";
   unmuteOverlay?: "visible" | "hidden";
   letterbox?: "fullscreen" | "off" | "on";

@@ -59,6 +59,8 @@ export function gameConfig(dname: string, token: string): RuffleConfig {
       port: SWF_SERVER_PORT,
       proxyUrl: GAME_URL,
     })),
+    // Con el motor por defecto los cráteres no se veían hasta el final de la partida
+    preferredRenderer: "webgl",
     autoplay: "on",
     unmuteOverlay: "hidden",
     letterbox: "on",
