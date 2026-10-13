@@ -189,7 +189,16 @@ const SCRIPT_PATCHES: Record<string, [RegExp, string][]> = {
     ],
   ],
   // Poderes de mascota con el código hecho pero sin conectar: scratch (gato) tiene Avatar.processScratch y
-  // dinoquake (dino) lo maneja la clase Earthquake, pero MakeWeapon no los usaba y no hacían nada
+  // dinoquake (dino) lo maneja la clase Earthquake, pero MakeWeapon no los usaba y no hacían nada.
+  // Además llamaban a funciones que no existen (Sounds.playScratch, Sounds.playDinoquake,
+  // AnimalGraphics.SCRATCH): el error cortaba la partida. Se usan los sonidos y el dibujo que sí trae el juego
+  "com.playdom.ballistics.avatar.Avatar": [
+    [/Sounds\.playScratch\(\)/, 'Sounds.playSound("CatPower_Scratch.mp3")'],
+    [/AnimalGraphics\.SCRATCH/, '"_scratch"'],
+  ],
+  "com.playdom.ballistics.weapons.Earthquake": [
+    [/Sounds\.playDinoquake\(\)/g, 'Sounds.playSound("dinoquake.mp3")'],
+  ],
   "com.playdom.ballistics.weapons.MakeWeapon": [
     [/("earthquake":Earthquake,)/, '$1\n         "dinoquake":Earthquake,'],
     [
