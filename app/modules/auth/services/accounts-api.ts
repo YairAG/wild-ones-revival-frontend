@@ -12,4 +12,13 @@ export const accountsApi = {
   login: (dname: string, password: string) => post("/login", { dname, password }),
   refresh: () => post("/refresh"),
   logout: () => accountsRequest("POST", "/logout", undefined, { auth: false }),
+  nameAvailable: async (dname: string) =>
+    (
+      await accountsRequest<{ available: boolean }>(
+        "GET",
+        `/register/available?dname=${encodeURIComponent(dname)}`,
+        undefined,
+        { auth: false },
+      )
+    ).data!.available,
 };

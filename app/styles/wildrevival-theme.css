@@ -239,6 +239,11 @@
     font-weight: 700;
     color: var(--color-error);
   }
+  .ayuda-exito {
+    font-size: var(--text-ayuda);
+    font-weight: 700;
+    color: var(--color-exito-texto);
+  }
 
   /* Paneles */
   .panel {
