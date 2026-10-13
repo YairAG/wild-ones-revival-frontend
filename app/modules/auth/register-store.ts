@@ -1,5 +1,5 @@
 // Ayudas del formulario de registro mientras escribes: si el nombre está libre (se le pregunta al backend un
-// poco después de la última tecla) y qué tan buena es la contraseña.
+// poco después de la última tecla), qué tan buena es la contraseña y si la confirmación coincide.
 import { create } from "zustand";
 import { passwordStrength } from "./helpers/password-strength";
 import { accountsApi } from "./services/accounts-api";
@@ -14,6 +14,8 @@ type RegisterState = {
   strength: { score: number; label: string };
   checkName(dname: string): void;
   setPassword(password: string): void;
+  confirm: "idle" | "match" | "mismatch"; // idle: la confirmación está vacía
+  checkConfirm(password: string, confirm: string): void;
   reset(): void;
 };
 
@@ -55,9 +57,17 @@ export const useRegisterStore = create<RegisterState>()((set) => ({
 
   setPassword: (password) => set({ strength: passwordStrength(password) }),
 
+  confirm: "idle",
+  checkConfirm: (password, confirm) =>
+    set({ confirm: !confirm ? "idle" : confirm === password ? "match" : "mismatch" }),
+
   reset() {
     clearTimeout(timer);
     lastName = "";
-    set({ name: { status: "idle", message: HINT }, strength: passwordStrength("") });
+    set({
+      name: { status: "idle", message: HINT },
+      strength: passwordStrength(""),
+      confirm: "idle",
+    });
   },
 }));

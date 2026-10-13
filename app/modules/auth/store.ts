@@ -4,7 +4,7 @@
 import { create } from "zustand";
 import { isTokenExpired } from "./helpers/token";
 import { accountsApi } from "./services/accounts-api";
-import type { AuthMode, Session } from "./types";
+import type { AuthMode, Session, Signup } from "./types";
 
 // Se renueva un poco antes de que venza, para que no caduque en camino
 const EXPIRY_MARGIN_MS = 30_000;
@@ -15,7 +15,7 @@ type AuthState = {
   loading: boolean;
   error: string | null;
   toggleMode(): void;
-  submit(dname: string, password: string): Promise<boolean>;
+  submit(dname: string, password: string, signup?: Signup): Promise<boolean>; // signup: solo al registrarse
   restore(): Promise<boolean>; // al abrir la página: true si había sesión (cookie vigente)
   freshToken(): Promise<string | null>; // token de acceso vigente (lo renueva si hace falta); null: sin sesión
   logout(): Promise<void>;
@@ -54,10 +54,13 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     toggleMode: () => set({ mode: get().mode === "login" ? "register" : "login", error: null }),
 
     // Registra o entra según el modo. Devuelve true si salió bien
-    async submit(dname, password) {
+    async submit(dname, password, signup) {
       set({ loading: true, error: null });
       try {
-        const session = await accountsApi[get().mode](dname, password);
+        const session =
+          get().mode === "login"
+            ? await accountsApi.login(dname, password)
+            : await accountsApi.register(dname, password, signup!);
         set({ session, loading: false });
         return true;
       } catch (e) {

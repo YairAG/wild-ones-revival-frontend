@@ -63,3 +63,13 @@ test("medidor de contraseña", () => {
   useRegisterStore.getState().setPassword("Abcdefg1!");
   expect(useRegisterStore.getState().strength).toEqual({ score: 4, label: "Muy buena" });
 });
+
+test("confirmar contraseña", () => {
+  const { checkConfirm } = useRegisterStore.getState();
+  checkConfirm("clave-segura", "");
+  expect(useRegisterStore.getState().confirm).toBe("idle");
+  checkConfirm("clave-segura", "clave-segur");
+  expect(useRegisterStore.getState().confirm).toBe("mismatch");
+  checkConfirm("clave-segura", "clave-segura");
+  expect(useRegisterStore.getState().confirm).toBe("match");
+});

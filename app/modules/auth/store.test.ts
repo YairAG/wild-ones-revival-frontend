@@ -34,8 +34,15 @@ test("en modo registro llama a /register", async () => {
     data: { id: 2, dname: "Beto", token: "jwt" },
   });
   useAuthStore.getState().toggleMode();
-  await useAuthStore.getState().submit("Beto", "clave-segura");
-  expect(vi.mocked(fetch).mock.calls[0][0]).toMatch(/\/register$/);
+  const signup = { email: "beto@example.com", acceptTerms: true };
+  await useAuthStore.getState().submit("Beto", "clave-segura", signup);
+  const [url, init] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
+  expect(url).toMatch(/\/register$/);
+  expect(JSON.parse(init.body as string)).toEqual({
+    dname: "Beto",
+    password: "clave-segura",
+    ...signup,
+  });
 });
 
 test("un error del backend se muestra y no hay sesión", async () => {

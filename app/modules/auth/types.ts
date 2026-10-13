@@ -12,3 +12,6 @@ export type NameCheck = {
   status: "idle" | "checking" | "available" | "taken" | "invalid";
   message: string;
 };
+
+/** Lo que el registro pide además del nombre y la contraseña */
+export type Signup = { email: string; acceptTerms: boolean };

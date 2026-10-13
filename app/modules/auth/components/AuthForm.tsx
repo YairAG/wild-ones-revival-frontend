@@ -1,6 +1,6 @@
 // Formulario de login / registro. Lee los campos al enviar; al registrarse, además, avisa mientras escribes si
-// el nombre está libre y qué tan buena es la contraseña (useRegisterStore).
-import type { FormEvent } from "react";
+// el nombre está libre, qué tan buena es la contraseña y si la confirmación coincide (useRegisterStore).
+import type { ChangeEvent, FormEvent } from "react";
 import { Button } from "@/components/Button";
 import { ErrorMessage } from "@/components/ErrorMessage";
 import { TextInput } from "@/components/TextInput";
@@ -8,6 +8,7 @@ import { useRegisterStore } from "../register-store";
 import { useAuthStore } from "../store";
 
 const NAME_TONE = { available: "ok", taken: "error", invalid: "error" } as const;
+const CONFIRM_TONE = { match: "ok", mismatch: "error" } as const;
 
 // Color de las barras llenas según cuántas son (1: rojo, 2: naranja, 3-4: verde)
 const barColor = (score: number) =>
@@ -15,13 +16,24 @@ const barColor = (score: number) =>
 
 export function AuthForm({ onSuccess }: { onSuccess(): void }) {
   const { mode, submit, loading, error } = useAuthStore();
-  const { name, strength, checkName, setPassword, reset } = useRegisterStore();
+  const { name, strength, confirm, checkName, setPassword, checkConfirm, reset } =
+    useRegisterStore();
   const isLogin = mode === "login";
+
+  // Al cambiar cualquiera de las dos contraseñas se vuelve a comparar
+  function comparePasswords(e: ChangeEvent<HTMLInputElement>) {
+    const form = new FormData(e.currentTarget.form!);
+    checkConfirm(String(form.get("password")), String(form.get("confirm")));
+  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!isLogin && confirm === "mismatch") return; // el aviso ya está en rojo bajo el campo
     const form = new FormData(e.currentTarget);
-    if (await submit(String(form.get("dname")), String(form.get("password")))) {
+    const signup = isLogin
+      ? undefined
+      : { email: String(form.get("email")), acceptTerms: form.get("acceptTerms") === "on" };
+    if (await submit(String(form.get("dname")), String(form.get("password")), signup)) {
       reset();
       onSuccess();
     }
@@ -38,13 +50,30 @@ export function AuthForm({ onSuccess }: { onSuccess(): void }) {
         hint={isLogin ? undefined : name.message}
         tone={isLogin ? undefined : NAME_TONE[name.status as keyof typeof NAME_TONE]}
       />
+      {!isLogin && (
+        <TextInput
+          label="Correo"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          hint="Solo para recuperar tu cuenta. No enviamos publicidad."
+        />
+      )}
       <TextInput
         label="Contraseña"
         name="password"
         type="password"
         autoComplete={isLogin ? "current-password" : "new-password"}
         required
-        onChange={isLogin ? undefined : (e) => setPassword(e.target.value)}
+        onChange={
+          isLogin
+            ? undefined
+            : (e) => {
+                setPassword(e.target.value);
+                comparePasswords(e);
+              }
+        }
         hint={isLogin ? undefined : strength.label}
       >
         {!isLogin && (
@@ -58,6 +87,37 @@ export function AuthForm({ onSuccess }: { onSuccess(): void }) {
           </span>
         )}
       </TextInput>
+      {!isLogin && (
+        <>
+          <TextInput
+            label="Confirmar contraseña"
+            name="confirm"
+            type="password"
+            autoComplete="new-password"
+            required
+            onChange={comparePasswords}
+            hint={
+              confirm === "mismatch"
+                ? "Las contraseñas no coinciden."
+                : confirm === "match"
+                  ? "Coinciden."
+                  : undefined
+            }
+            tone={confirm === "idle" ? undefined : CONFIRM_TONE[confirm]}
+          />
+          <label className="flex items-start gap-2.5 text-sm leading-snug text-texto-cuerpo">
+            <input
+              type="checkbox"
+              name="acceptTerms"
+              required
+              className="mt-0.5 size-4.5 shrink-0 accent-naranja"
+            />
+            <span>
+              Acepto las reglas de la comunidad, la política de privacidad y los términos de uso.
+            </span>
+          </label>
+        </>
+      )}
       <ErrorMessage message={error} />
       <div className="mt-1">
         <Button type="submit" disabled={loading}>
