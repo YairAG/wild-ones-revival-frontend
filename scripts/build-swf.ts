@@ -224,11 +224,33 @@ const SCRIPT_PATCHES: Record<string, [RegExp, string][]> = {
     [/Sounds\.playDinoquake\(\)/g, 'Sounds.playSound("dinoquake.mp3")'],
   ],
   // Tienda: muchas armas (nukes, lluvias...) no traen el dibujo grande (<tipo>_weapon) en los assets y su cuadro
-  // salía vacío. Si falta, se usa su icono (<tipo>_icon) al doble de tamaño
+  // salía vacío. Si falta, se usa su icono (<tipo>_icon), ajustado a 90 x 80 y centrado
   "com.playdom.ballistics.shop.ShopWeaponConveyorPanel": [
     [
-      /(weaponImage = Ballistics\.assets\.makeLibraryDisplayObject\(weaponModel\.weaponProperties\.type \+ "_weapon"\);)/,
-      '$1\n         if(weaponImage == null)\n         {\n            weaponImage = Ballistics.assets.makeLibraryDisplayObject(weaponModel.weaponProperties.type + "_icon");\n            if(weaponImage != null)\n            {\n               weaponImage.scaleX = weaponImage.scaleY = 2;\n            }\n         }',
+      /weaponImage = Ballistics\.assets\.makeLibraryDisplayObject\(weaponModel\.weaponProperties\.type \+ "_weapon"\);\s*if\(weaponImage != null\)\s*\{\s*addChild\(weaponImage\);\s*weaponImage\.x = 65;\s*weaponImage\.y = 60;\s*\}/,
+      [
+        'weaponImage = Ballistics.assets.makeLibraryDisplayObject(weaponModel.weaponProperties.type + "_weapon");',
+        "         var isIcon:Boolean = weaponImage == null;",
+        "         if(isIcon)",
+        "         {",
+        '            weaponImage = Ballistics.assets.makeLibraryDisplayObject(weaponModel.weaponProperties.type + "_icon");',
+        "         }",
+        "         if(weaponImage != null)",
+        "         {",
+        "            addChild(weaponImage);",
+        "            weaponImage.x = 65;",
+        "            weaponImage.y = 60;",
+        "            if(isIcon)",
+        "            {",
+        // el icono se acomoda desde su esquina: se ajusta a 90 x 80 y se centra donde va el dibujo grande
+        "               var box:* = weaponImage.getBounds(weaponImage);",
+        "               var fit:Number = Math.min(90 / box.width,80 / box.height);",
+        "               weaponImage.scaleX = weaponImage.scaleY = fit;",
+        "               weaponImage.x = 77 - (box.x + box.width / 2) * fit;",
+        "               weaponImage.y = 68 - (box.y + box.height / 2) * fit;",
+        "            }",
+        "         }",
+      ].join("\n"),
     ],
   ],
   // Pantalla final: el botón "avisar a mis amigos" publicaba en Facebook (ExternalCalls.viral); se esconde
