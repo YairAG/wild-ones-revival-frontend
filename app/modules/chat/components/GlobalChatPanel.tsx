@@ -82,7 +82,17 @@ export function GlobalChatPanel() {
                 </span>
                 <span className="chat-hora mr-0">{time(message.at)}</span>
               </p>
-              <p className="text-texto-cuerpo">{message.text}</p>
+              {/* Si el filtro tapó algo, el moderador ve el original al pasar el mouse */}
+              {message.original ? (
+                <p
+                  title={`Original: ${message.original}`}
+                  className="cursor-help text-texto-cuerpo underline decoration-moderacion decoration-dotted"
+                >
+                  {message.text}
+                </p>
+              ) : (
+                <p className="text-texto-cuerpo">{message.text}</p>
+              )}
               {mod && (
                 <p className="text-micro font-bold">
                   <button onClick={() => remove(message.id)} className="chat-moderacion">

@@ -6,6 +6,7 @@ export type ChatMessage = {
   userId: number; // quién lo escribió
   dname: string;
   text: string;
+  original?: string; // solo llega a moderadores, si el filtro cambió el texto
   at: string; // fecha ISO
 };
 
