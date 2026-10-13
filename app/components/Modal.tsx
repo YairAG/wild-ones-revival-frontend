@@ -30,7 +30,8 @@ export function Modal({ title, onClose, children, wide, bare }: Props) {
       }}
       aria-labelledby={bare ? undefined : titleId}
       aria-label={bare ? title : undefined}
-      className={`modal m-auto w-[calc(100%-2rem)] overflow-hidden p-0 text-texto backdrop:bg-[rgb(22_38_48/0.6)] ${wide ? "max-w-xl" : "max-w-sm"}`}
+      // Nunca más alto que la ventana: si no cabe, se desplaza. open:flex (no flex): cerrado tiene que seguir oculto
+      className={`modal m-auto max-h-[calc(100svh-2rem)] w-[calc(100%-2rem)] overflow-y-auto p-0 open:flex open:flex-col text-texto backdrop:bg-[rgb(22_38_48/0.6)] ${wide ? "max-w-xl" : "max-w-sm"}`}
     >
       {bare ? (
         children

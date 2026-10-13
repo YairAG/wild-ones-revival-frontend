@@ -182,8 +182,9 @@ function ReportForm({ profile, notice }: { profile: PlayerProfile; notice: strin
   const back = () => useProfileStore.getState().setStep("profile");
 
   return (
-    <form onSubmit={sendReport}>
-      <div className="flex items-center gap-2.5 border-b-2 border-borde bg-encabezado px-4.5 py-3.5">
+    // Encabezado y botones fijos; si no cabe en la ventana, solo se desplaza el formulario del medio
+    <form onSubmit={sendReport} className="flex min-h-0 flex-col">
+      <div className="flex shrink-0 items-center gap-2.5 border-b-2 border-borde bg-encabezado px-4.5 py-3.5">
         <button
           type="button"
           onClick={back}
@@ -207,7 +208,7 @@ function ReportForm({ profile, notice }: { profile: PlayerProfile; notice: strin
         <h2 className="font-display text-[22px]">Reportar a {profile.dname}</h2>
       </div>
 
-      <div className="flex flex-col gap-3.5 px-5.5 py-4.5">
+      <div className="flex min-h-0 flex-col gap-3.5 overflow-y-auto px-5.5 py-4.5">
         <fieldset className="flex flex-col gap-1.5">
           <legend className="text-etiqueta mb-2 font-extrabold">¿Qué pasó?</legend>
           {REASONS.map(([value, label]) => (
@@ -260,7 +261,7 @@ function ReportForm({ profile, notice }: { profile: PlayerProfile; notice: strin
         )}
       </div>
 
-      <div className="flex justify-end gap-2.5 border-t-2 border-borde bg-encabezado px-4.5 py-3.5">
+      <div className="flex shrink-0 justify-end gap-2.5 border-t-2 border-borde bg-encabezado px-4.5 py-3.5">
         <button type="button" onClick={back} className="btn btn-secundario">
           Cancelar
         </button>
