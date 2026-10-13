@@ -25,7 +25,7 @@ async function addFriend(e: FormEvent<HTMLFormElement>) {
 }
 
 export function FriendsPanel() {
-  const { list, error, accept, dismiss } = useFriendsStore();
+  const { list, error, accept, dismiss, confirmingRemove, askRemove, remove } = useFriendsStore();
   const online = list.friends.filter((friend) => friend.presence !== "offline").length;
 
   return (
@@ -80,6 +80,22 @@ export function FriendsPanel() {
           )}
           {list.friends.map((friend) => {
             const isOnline = friend.presence !== "offline";
+            // Esta fila pide confirmación para quitarlo
+            if (confirmingRemove === friend.id) {
+              return (
+                <div key={friend.id} className="flex min-h-11 items-center justify-between gap-2">
+                  <span className="text-etiqueta font-bold">¿Quitar a {friend.dname}?</span>
+                  <span className="flex gap-1.5">
+                    <button onClick={() => remove(friend.id)} className="btn btn-fila btn-peligro">
+                      Quitar
+                    </button>
+                    <button onClick={() => askRemove(null)} className="btn btn-fila btn-texto">
+                      No
+                    </button>
+                  </span>
+                </div>
+              );
+            }
             return (
               <div key={friend.id} className="flex min-h-11 items-center gap-2.5">
                 <span
@@ -95,6 +111,13 @@ export function FriendsPanel() {
                     {presenceLabel[friend.presence]} · Nivel {friend.level}
                   </span>
                 </span>
+                <button
+                  onClick={() => askRemove(friend.id)}
+                  aria-label={`Quitar a ${friend.dname}`}
+                  className="btn btn-fila btn-texto text-texto-terciario"
+                >
+                  Quitar
+                </button>
               </div>
             );
           })}

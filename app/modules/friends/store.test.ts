@@ -20,7 +20,11 @@ function mockBackend(...responses: [number, object | null][]) {
 
 beforeEach(() => {
   useAuthStore.setState({ session: { id: 1, dname: "Ana", token: "jwt" } });
-  useFriendsStore.setState({ list: { friends: [], incoming: [], outgoing: [] }, error: null });
+  useFriendsStore.setState({
+    list: { friends: [], incoming: [], outgoing: [] },
+    error: null,
+    confirmingRemove: null,
+  });
 });
 afterEach(() => vi.useRealTimers());
 
@@ -54,6 +58,18 @@ test("rechazar usa DELETE (responde 204, sin cuerpo)", async () => {
   expect(fetchMock.mock.calls[0][0]).toMatch(/\/friends\/requests\/3$/);
   expect(fetchMock.mock.calls[0][1].method).toBe("DELETE");
   expect(useFriendsStore.getState().error).toBeNull();
+});
+
+test("quitar un amigo pide confirmación antes de borrarlo", async () => {
+  const fetchMock = mockBackend([204, null], [200, list]);
+  useFriendsStore.getState().askRemove(2);
+  expect(useFriendsStore.getState().confirmingRemove).toBe(2);
+  expect(fetchMock).not.toHaveBeenCalled(); // pedir confirmación no borra nada
+
+  await useFriendsStore.getState().remove(2);
+  expect(fetchMock.mock.calls[0][0]).toMatch(/\/friends\/2$/);
+  expect(fetchMock.mock.calls[0][1].method).toBe("DELETE");
+  expect(useFriendsStore.getState().confirmingRemove).toBeNull();
 });
 
 test("mientras el panel está en pantalla recarga cada 15 s, y para al quitarlo", async () => {

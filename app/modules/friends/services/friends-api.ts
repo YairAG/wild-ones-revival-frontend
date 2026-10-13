@@ -26,4 +26,6 @@ export const friendsApi = {
   accept: (id: number) => request("POST", `/friends/requests/${id}/accept`),
   // Rechazar una que te enviaron o cancelar una que enviaste
   dismiss: (id: number) => request("DELETE", `/friends/requests/${id}`),
+  // Dejar de ser amigos (para los dos)
+  remove: (id: number) => request("DELETE", `/friends/${id}`),
 };
