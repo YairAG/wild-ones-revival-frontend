@@ -69,7 +69,8 @@ const LABEL_BACKGROUNDS = [
 // solo está esto; el código original se exporta del SWF al armarlo
 const SCRIPT_PATCHES: Record<string, [RegExp, string][]> = {
   // Sala de espera: el original te marcaba "listo" siempre y escondía los botones. Ahora empiezas sin estar
-  // listo, el estado sale del servidor y se ve el botón "listo" o "no listo" según toque
+  // listo, el estado sale del servidor y se ve el botón "listo" o "no listo" según toque. Las flechas de
+  // mascota se esconden: en el original solo giraban en pantalla, no cambiaban la mascota
   "com.playdom.ballistics.gameroomlobby.GameRoomLobbyMainView": [
     [/(addDataChangeEventHandlers\(\);\s*this\.setReadyState\()true\)/, "$1false)"],
     [
@@ -78,7 +79,8 @@ const SCRIPT_PATCHES: Record<string, [RegExp, string][]> = {
     ],
     [
       /(this\.readyOverlayCheck\.visible = isReady;)/,
-      "$1 this.readyButton.visible = !isReady; this.notReadyButton.visible = isReady;",
+      "$1 this.readyButton.visible = !isReady; this.notReadyButton.visible = isReady;" +
+        " this.previousPetButton.visible = this.nextPetButton.visible = false;",
     ],
   ],
 };
