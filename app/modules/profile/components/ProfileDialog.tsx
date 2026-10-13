@@ -56,7 +56,7 @@ function CloseButton({ className }: { className: string }) {
 }
 
 function ProfileView({ profile, notice }: { profile: PlayerProfile; notice: string | null }) {
-  const { addFriend, invite, toggleBlock, setStep } = useProfileStore.getState();
+  const { addFriend, invite, openChat, toggleBlock, setStep } = useProfileStore.getState();
   const { relation, presence } = profile;
   const isOnline = presence !== "offline";
   const stats: [string, number][] = [
@@ -143,6 +143,12 @@ function ProfileView({ profile, notice }: { profile: PlayerProfile; notice: stri
                   className="btn btn-secundario flex-1"
                 >
                   Invitar
+                </button>
+              )}
+              {/* Si su ajuste no lo permite, el chat lo avisa al escribir */}
+              {!profile.blocked && (
+                <button onClick={openChat} className="btn btn-secundario flex-1">
+                  Mensaje
                 </button>
               )}
             </div>

@@ -5,7 +5,7 @@ import { Modal } from "@/components/Modal";
 import { useAuthStore } from "@/modules/auth/store";
 import { useFriendsStore } from "@/modules/friends/store";
 import { useSettingsStore } from "../store";
-import type { Quality, SettingsTab } from "../types";
+import type { DmPolicy, Quality, SettingsTab } from "../types";
 
 const TABS: [SettingsTab, string][] = [
   ["game", "Juego"],
@@ -149,11 +149,42 @@ function AudioTab() {
   );
 }
 
+const DM_POLICIES: [DmPolicy, string][] = [
+  ["friends", "Solo amigos"],
+  ["everyone", "Todos"],
+  ["nobody", "Nadie"],
+];
+
 function ChatTab() {
-  const showChatTime = useSettingsStore((s) => s.preferences.showChatTime);
+  const { showChatTime, highlightMentions } = useSettingsStore((s) => s.preferences);
+  const dmPolicy = useSettingsStore((s) => s.dmPolicy);
+  const notice = useSettingsStore((s) => s.notice);
   const { list, unblock } = useFriendsStore();
   return (
     <>
+      <label className="flex flex-col gap-2">
+        <span className="text-cuerpo font-extrabold">Quién puede escribirme en privado</span>
+        <select
+          value={dmPolicy ?? ""}
+          disabled={!dmPolicy}
+          onChange={(e) => void settings().setDmPolicy(e.target.value as DmPolicy)}
+          className="campo max-w-72"
+        >
+          {!dmPolicy && <option value="">Cargando...</option>}
+          {DM_POLICIES.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+        {notice && !notice.ok && <span className="ayuda-error">{notice.text}</span>}
+      </label>
+      <Switch
+        label="Resaltar menciones"
+        help="Cuando alguien escribe tu @usuario en el chat global."
+        on={highlightMentions}
+        onChange={(on) => settings().setPreference("highlightMentions", on)}
+      />
       <Switch
         label="Mostrar hora en mensajes"
         on={showChatTime}

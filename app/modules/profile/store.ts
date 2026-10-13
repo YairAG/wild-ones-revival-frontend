@@ -2,6 +2,8 @@
 // bloquea o reporta. Si se abrió desde un mensaje del chat, ese mensaje se adjunta al reporte.
 import { create } from "zustand";
 import { useAuthStore } from "@/modules/auth/store";
+import { useChatStore } from "@/modules/chat/store";
+import { useGameStore } from "@/modules/game/store";
 import { friendsApi } from "@/modules/friends/services/friends-api";
 import { useFriendsStore } from "@/modules/friends/store";
 import { useInvitesStore } from "@/modules/invites/store";
@@ -21,6 +23,7 @@ type ProfileState = {
   setStep(step: ProfileStep): void;
   addFriend(): Promise<void>;
   invite(): void;
+  openChat(): void; // abre la conversación privada con él
   toggleBlock(): Promise<void>;
   report(reason: ReportReason, details: string, alsoBlock: boolean): Promise<void>;
 };
@@ -75,6 +78,12 @@ export const useProfileStore = create<ProfileState>((set, get) => {
     invite() {
       useInvitesStore.getState().invite(get().profile!.id);
       set({ playerId: null }); // el aviso de la invitación sale en la esquina
+    },
+    openChat() {
+      const { id, dname } = get().profile!;
+      set({ playerId: null });
+      useGameStore.setState({ focus: false }); // el chat tiene que verse
+      void useChatStore.getState().openThread({ id, dname });
     },
     toggleBlock() {
       const { id, blocked } = get().profile!;

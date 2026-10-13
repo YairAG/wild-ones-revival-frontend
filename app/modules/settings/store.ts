@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { useAuthStore } from "@/modules/auth/store";
 import { accountApi } from "./services/account-api";
-import type { Preferences, SettingsTab } from "./types";
+import type { DmPolicy, Preferences, SettingsTab } from "./types";
 
 const PREFERENCES_KEY = "wildrevival-settings";
 const DEFAULTS: Preferences = {
@@ -11,6 +11,7 @@ const DEFAULTS: Preferences = {
   volume: 100,
   muteInBackground: true,
   showChatTime: true,
+  highlightMentions: true,
 };
 
 function savedPreferences(): Preferences {
@@ -26,6 +27,9 @@ type SettingsState = {
   tab: SettingsTab;
   preferences: Preferences;
   notice: { ok: boolean; text: string } | null; // respuesta de una acción de la cuenta
+  dmPolicy: DmPolicy | null; // de la cuenta; null: sin cargar
+  loadAccount(): Promise<void>;
+  setDmPolicy(dmPolicy: DmPolicy): Promise<void>;
   show(): void;
   hide(): void;
   setTab(tab: SettingsTab): void;
@@ -52,8 +56,25 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     tab: "game",
     preferences: savedPreferences(),
     notice: null,
+    dmPolicy: null,
 
-    show: () => set({ open: true, notice: null }),
+    async loadAccount() {
+      try {
+        set({ dmPolicy: (await accountApi.get()).dmPolicy });
+      } catch (e) {
+        set({ notice: { ok: false, text: (e as Error).message } });
+      }
+    },
+    async setDmPolicy(dmPolicy) {
+      const before = get().dmPolicy;
+      set({ dmPolicy }); // se ve al momento; si falla, vuelve
+      if (!(await run(() => accountApi.setDmPolicy(dmPolicy)))) set({ dmPolicy: before });
+    },
+
+    show() {
+      set({ open: true, notice: null });
+      void get().loadAccount();
+    },
     hide: () => set({ open: false }),
     setTab: (tab) => set({ tab, notice: null }),
 
