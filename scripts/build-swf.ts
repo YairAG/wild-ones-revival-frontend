@@ -223,6 +223,14 @@ const SCRIPT_PATCHES: Record<string, [RegExp, string][]> = {
   "com.playdom.ballistics.weapons.Earthquake": [
     [/Sounds\.playDinoquake\(\)/g, 'Sounds.playSound("dinoquake.mp3")'],
   ],
+  // Tienda: muchas armas (nukes, lluvias...) no traen el dibujo grande (<tipo>_weapon) en los assets y su cuadro
+  // salía vacío. Si falta, se usa su icono (<tipo>_icon) al doble de tamaño
+  "com.playdom.ballistics.shop.ShopWeaponConveyorPanel": [
+    [
+      /(weaponImage = Ballistics\.assets\.makeLibraryDisplayObject\(weaponModel\.weaponProperties\.type \+ "_weapon"\);)/,
+      '$1\n         if(weaponImage == null)\n         {\n            weaponImage = Ballistics.assets.makeLibraryDisplayObject(weaponModel.weaponProperties.type + "_icon");\n            if(weaponImage != null)\n            {\n               weaponImage.scaleX = weaponImage.scaleY = 2;\n            }\n         }',
+    ],
+  ],
   // Pantalla final: el botón "avisar a mis amigos" publicaba en Facebook (ExternalCalls.viral); se esconde
   "com.playdom.ballistics.gamesummary.GameSummaryView": [
     [
