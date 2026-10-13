@@ -3,7 +3,8 @@
 import type { FormEvent } from "react";
 import { Panel } from "@/components/Panel";
 import { useAuthStore } from "@/modules/auth/store";
-import { MUTE_MINUTES, useChatStore } from "../store";
+import { useChatStore } from "../store";
+import { MuteDialog } from "./MuteDialog";
 
 // Refs de callback fuera del componente (siempre las mismas):
 // mientras la lista está en pantalla la conexión sigue abierta; al quitarla, React llama a la función que
@@ -33,7 +34,7 @@ const time = (iso: string) =>
   });
 
 export function GlobalChatPanel() {
-  const { messages, mod, connected, notice, remove, mute } = useChatStore();
+  const { messages, mod, connected, notice, remove, askMute } = useChatStore();
   const myId = useAuthStore((s) => s.session?.id);
 
   return (
@@ -102,8 +103,7 @@ export function GlobalChatPanel() {
                     <>
                       {" · "}
                       <button
-                        onClick={() => mute(message.userId)}
-                        title={`No podrá escribir en ${MUTE_MINUTES} min`}
+                        onClick={() => askMute({ id: message.userId, dname: message.dname })}
                         className="chat-moderacion"
                       >
                         Silenciar
@@ -120,6 +120,7 @@ export function GlobalChatPanel() {
             {notice}
           </p>
         )}
+        <MuteDialog />
       </div>
     </Panel>
   );

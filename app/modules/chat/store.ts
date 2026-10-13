@@ -1,11 +1,19 @@
 // Chat global: los mensajes que llegan por la conexión, si puedes moderar y los avisos.
 import { create } from "zustand";
 import { useAuthStore } from "@/modules/auth/store";
+import type { PlayerRef } from "@/modules/friends/types";
 import { openChatConnection } from "./services/chat-connection";
 import type { ChatMessage, ChatServerEvent } from "./types";
 
 const NOTICE_MS = 5_000;
-export const MUTE_MINUTES = 60;
+
+// Duraciones que se pueden elegir al silenciar, en minutos
+export const MUTE_OPTIONS = [
+  { minutes: 5, label: "5 min" },
+  { minutes: 60, label: "1 hora" },
+  { minutes: 24 * 60, label: "1 día" },
+  { minutes: 7 * 24 * 60, label: "1 semana" },
+];
 
 type ChatState = {
   messages: ChatMessage[];
@@ -15,7 +23,10 @@ type ChatState = {
   connect(): () => void; // abre la conexión; devuelve la función que la cierra
   send(text: string): void;
   remove(id: string): void; // moderadores
-  mute(userId: number): void; // moderadores: silencia MUTE_MINUTES
+  // Silenciar, en dos pasos: askMute abre el modal para elegir duración y motivo; mute lo manda
+  muting: PlayerRef | null;
+  askMute(player: PlayerRef | null): void; // null: cerrar el modal
+  mute(minutes: number, reason: string): void;
 };
 
 let connection: ReturnType<typeof openChatConnection> | null = null;
@@ -62,6 +73,14 @@ export const useChatStore = create<ChatState>((set, get) => {
 
     send: (text) => connection?.send({ type: "send", text }),
     remove: (id) => connection?.send({ type: "delete", id }),
-    mute: (userId) => connection?.send({ type: "mute", userId, minutes: MUTE_MINUTES }),
+
+    muting: null,
+    askMute: (player) => set({ muting: player }),
+    mute(minutes, reason) {
+      const player = get().muting;
+      if (!player) return;
+      connection?.send({ type: "mute", userId: player.id, minutes, reason });
+      set({ muting: null });
+    },
   };
 });

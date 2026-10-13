@@ -26,7 +26,7 @@ const hola: ChatMessage = {
 
 beforeEach(() => {
   sent.length = 0;
-  useChatStore.setState({ messages: [], mod: false, connected: false, notice: null });
+  useChatStore.setState({ messages: [], mod: false, connected: false, notice: null, muting: null });
   close = useChatStore.getState().connect();
 });
 afterEach(() => close());
@@ -48,11 +48,14 @@ test("los mensajes nuevos se agregan al final y los borrados se quitan", () => {
 test("enviar, borrar y silenciar mandan el comando al servidor", () => {
   useChatStore.getState().send("hola");
   useChatStore.getState().remove("a1");
-  useChatStore.getState().mute(2);
+  useChatStore.getState().askMute({ id: 2, dname: "Beto" });
+  expect(useChatStore.getState().muting).toEqual({ id: 2, dname: "Beto" }); // abre el modal
+  useChatStore.getState().mute(24 * 60, "spam");
+  expect(useChatStore.getState().muting).toBeNull(); // y lo cierra
   expect(sent).toEqual([
     { type: "send", text: "hola" },
     { type: "delete", id: "a1" },
-    { type: "mute", userId: 2, minutes: 60 },
+    { type: "mute", userId: 2, minutes: 24 * 60, reason: "spam" },
   ]);
 });
 
