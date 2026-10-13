@@ -37,9 +37,21 @@ function translate(node: unknown, fields: string[]): void {
   }
 }
 
+// Accesorios y armas: la tienda oculta lo que tiene expireDate pasada (temporadas de 2010-2013), y la pestaña
+// "¡Nuevo!" de accesorios solo muestra los que tienen featuredEndDate futura (si no, cajas "Muy pronto"). Se
+// quita expireDate a todo (vuelve a la tienda) y los que estuvieron destacados lo vuelven a estar
+const FEATURED_UNTIL = "12/31/2099";
+function unlock(items: { expireDate?: string; featuredEndDate?: string }[]) {
+  for (const item of items) {
+    delete item.expireDate;
+    if (item.featuredEndDate) item.featuredEndDate = FEATURED_UNTIL;
+  }
+}
+
 for (const [file, fields] of Object.entries(FIELDS)) {
   const data = JSON.parse(readFileSync(`${ORIGINALS}/${file}`, "utf8"));
   translate(data, fields);
+  if (file == "Accessories.dat" || file == "WeaponsGrid.dat") unlock(data);
   writeFileSync(`${OUTPUT}/${file}`, JSON.stringify(data, null, "\t"));
 }
 
