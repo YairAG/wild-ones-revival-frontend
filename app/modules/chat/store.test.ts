@@ -1,0 +1,72 @@
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import type { ChatMessage, ChatServerEvent } from "./types";
+
+// Conexión simulada: guarda lo que se envía y deja "recibir" eventos del servidor o cortarla
+const sent: object[] = [];
+let receive: (event: ChatServerEvent) => void = () => {};
+let drop: () => void = () => {};
+vi.mock("./services/chat-connection", () => ({
+  openChatConnection: (_token: string, onEvent: typeof receive, onClose: () => void) => {
+    receive = onEvent;
+    drop = onClose;
+    return { send: (m: object) => sent.push(m), close: () => {} };
+  },
+}));
+
+const { useChatStore } = await import("./store");
+let close: () => void;
+
+const hola: ChatMessage = {
+  id: "a1",
+  userId: 2,
+  dname: "Beto",
+  text: "hola",
+  at: "2026-01-01T12:00:00Z",
+};
+
+beforeEach(() => {
+  sent.length = 0;
+  useChatStore.setState({ messages: [], mod: false, connected: false, notice: null });
+  close = useChatStore.getState().connect();
+});
+afterEach(() => close());
+
+test("al entrar llega el historial y queda conectado", () => {
+  receive({ type: "history", messages: [hola], mod: false });
+  expect(useChatStore.getState()).toMatchObject({ messages: [hola], mod: false, connected: true });
+});
+
+test("los mensajes nuevos se agregan al final y los borrados se quitan", () => {
+  receive({ type: "history", messages: [hola], mod: false });
+  const otro = { ...hola, id: "a2", text: "¿una partida?" };
+  receive({ type: "message", message: otro });
+  expect(useChatStore.getState().messages).toEqual([hola, otro]);
+  receive({ type: "deleted", id: "a1" });
+  expect(useChatStore.getState().messages).toEqual([otro]);
+});
+
+test("enviar, borrar y silenciar mandan el comando al servidor", () => {
+  useChatStore.getState().send("hola");
+  useChatStore.getState().remove("a1");
+  useChatStore.getState().mute(2);
+  expect(sent).toEqual([
+    { type: "send", text: "hola" },
+    { type: "delete", id: "a1" },
+    { type: "mute", userId: 2, minutes: 60 },
+  ]);
+});
+
+test("los errores del servidor se muestran y se quitan solos a los 5 s", () => {
+  vi.useFakeTimers();
+  receive({ type: "error", error: "Espera un momento antes de mandar otro mensaje" });
+  expect(useChatStore.getState().notice).toBe("Espera un momento antes de mandar otro mensaje");
+  vi.advanceTimersByTime(5_000);
+  expect(useChatStore.getState().notice).toBeNull();
+  vi.useRealTimers();
+});
+
+test("si se cae la conexión deja de estar conectado", () => {
+  receive({ type: "history", messages: [], mod: true });
+  drop();
+  expect(useChatStore.getState().connected).toBe(false);
+});

@@ -1,7 +1,18 @@
+// Mensajes del chat global (WebSocket /chat del backend de cuentas, ver README de wildones-accounts).
+
 /** Un mensaje del chat global */
 export type ChatMessage = {
-  id: number;
-  dname: string; // quién lo escribió
+  id: string;
+  userId: number; // quién lo escribió
+  dname: string;
   text: string;
-  time: string; // HH:MM
+  at: string; // fecha ISO
 };
+
+/** Lo que manda el servidor */
+export type ChatServerEvent =
+  | { type: "history"; messages: ChatMessage[]; mod: boolean } // al entrar
+  | { type: "message"; message: ChatMessage }
+  | { type: "deleted"; id: string } // un moderador lo borró
+  | { type: "notice"; text: string }
+  | { type: "error"; error: string };
