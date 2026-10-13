@@ -1,7 +1,9 @@
 // Redibuja palabras que en el SWF son dibujos (no texto), p. ej. "HOME" junto al ícono del menú.
 // En cada dibujo, la palabra es la figura que está más a la derecha: se quita y se dibuja la nueva palabra
 // con la fuente dada, a la misma altura, posición y color (si tiene varias capas, como una sombra, cada una).
-// Con "<id>=<PALABRA>>" la nueva queda alineada a la derecha, donde terminaba la vieja.
+// Con "<id>=<PALABRA>>" la nueva queda alineada a la derecha, donde terminaba la vieja, y con "<id>=<PALABRA>~"
+// centrada donde estaba la vieja. Con "_" al final (antes de ">" o "~"), la palabra es la figura de más abajo
+// en vez de la de más a la derecha (p. ej. "BACK" debajo de una flecha).
 //
 //   java -cp "<carpeta de JPEXS>/lib/*" scripts/swf/RedrawLabels.java <entrada.swf> <salida.swf> \
 //        <carpeta con los SVG exportados> <fuente.ttf> <id>=<PALABRA> ...
@@ -50,13 +52,22 @@ public class RedrawLabels {
       }
       String[] pair = args[i].split("=", 2);
       String svg = Files.readString(Path.of(args[2], pair[0] + ".svg"));
+      // Opciones al final de la palabra: ">" (a la derecha) o "~" (centrada), y antes "_" (la de más abajo)
+      boolean alignRight = pair[1].endsWith(">");
+      boolean center = pair[1].endsWith("~");
+      String word = alignRight || center ? pair[1].substring(0, pair[1].length() - 1) : pair[1];
+      boolean lowest = word.endsWith("_");
+      if (lowest) word = word.substring(0, word.length() - 1);
 
       // La palabra: la figura que empieza más a la derecha y las de su mismo color y altura parecida (a veces
       // cada letra es una figura). Una figura del mismo color pero mucho más alta (un fondo) no cuenta
       List<String[]> paths = new ArrayList<>(); // [figura completa, trazo, color]
       Matcher m = PATH.matcher(svg);
       while (m.find()) paths.add(new String[] {m.group(0), m.group(1), m.group(2)});
-      String[] last = paths.stream().max(Comparator.comparingDouble(p -> bounds(p[1]).getMinX())).orElseThrow();
+      Comparator<String[]> order = lowest
+          ? Comparator.comparingDouble(p -> bounds(p[1]).getMinY())
+          : Comparator.comparingDouble(p -> bounds(p[1]).getMinX());
+      String[] last = paths.stream().max(order).orElseThrow();
       double height = bounds(last[1]).getHeight();
       Rectangle2D wordBounds = null;
       for (String[] p : paths) {
@@ -77,9 +88,6 @@ public class RedrawLabels {
         svg = svg.replace(p[0], "");
       }
 
-      // "PALABRA>": alineada a la derecha (termina donde terminaba la vieja); si no, empieza donde empezaba
-      boolean alignRight = pair[1].endsWith(">");
-      String word = alignRight ? pair[1].substring(0, pair[1].length() - 1) : pair[1];
       StringBuilder newPaths = new StringBuilder();
       double endX = -Double.MAX_VALUE;
       for (var layer : layers.entrySet()) {
@@ -88,8 +96,9 @@ public class RedrawLabels {
         Rectangle2D target = new Rectangle2D.Double(b.getMinX(), b.getMaxY() - wordBounds.getHeight(),
             wordBounds.getWidth(), wordBounds.getHeight());
         String newOutline = outline(font, word, target);
-        if (alignRight) {
-          double dx = b.getMaxX() - bounds(newOutline).getMaxX();
+        if (alignRight || center) {
+          Rectangle2D nb = bounds(newOutline);
+          double dx = alignRight ? b.getMaxX() - nb.getMaxX() : b.getCenterX() - nb.getCenterX();
           target.setRect(target.getX() + dx, target.getY(), target.getWidth(), target.getHeight());
           newOutline = outline(font, word, target);
         }

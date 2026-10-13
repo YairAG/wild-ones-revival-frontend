@@ -69,6 +69,15 @@ const LABELS: Record<string, string> = {
   1752: "ACCESORIOS>",
   1807: "ACCESORIOS>",
   1809: "ACCESORIOS>",
+  // Tienda de accesorios: el título y las pestañas ("~" centra), y el botón de volver (normal y al pasar el mouse)
+  1825: "COMPRAR ACCESORIOS",
+  1853: "CABEZA~",
+  1856: "TORSO~",
+  1864: "PIERNAS~",
+  1867: "PIES~",
+  1870: "OTROS~",
+  1455: "ATRAS_~", // "_": la palabra está debajo de la flecha
+  1456: "ATRAS_~",
 };
 // Fondos que se alargan para que quepa el texto en español: "<id>*<veces más ancho>" o "<id>@<y0>:<y1>+<px>"
 // por renglón (ver RedrawLabels.java). 195: etiquetas de inicio (MULTIJUGADOR, MIS MASCOTAS, TIENDA);
