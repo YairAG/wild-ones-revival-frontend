@@ -70,9 +70,100 @@ const LABEL_BACKGROUNDS = [
 // los controles de la partida terminan ahí)
 const STAGE_HEIGHT = 555;
 
+// Mascotas para la web (perfil, cabecera), en un reproductor aparte en modo retrato (ver SCRIPT_PATCHES): la
+// página pide una con requestPet(id, mascota, tamaño) y el SWF la arma con AnimalGraphics, la misma clase que
+// usa el juego (con su ropa y colores). La dibuja en su siguiente cuadro (dibujar dentro de la llamada de
+// JavaScript rompe a Ruffle) y, si los dibujos todavía no cargan, espera.
+// Luego llama a wildRevivalPet(id, píxeles) en la página: un cuadro de tamaño x tamaño en ARGB, o null si no se
+// pudo (el SWF no trae un codificador de PNG)
+const PET_RENDERER = `
+      private var petRequests:Array = [];
+
+      private function requestPet(id:String, pet:Object, size:int) : void
+      {
+         petRequests.push({"id":id,"pet":pet,"size":size});
+         addEventListener(Event.ENTER_FRAME,renderRequestedPets);
+      }
+
+      private function petsReady() : Boolean
+      {
+         return Boolean(Ballistics.assets) && Boolean(Ballistics.chassisObject) && Boolean(Ballistics.accessoriesObject) && Ballistics.assets.makeLibraryDisplayObject("dog_idle") != null;
+      }
+
+      private function renderRequestedPets(e:Event) : void
+      {
+         if(!petsReady())
+         {
+            return;
+         }
+         removeEventListener(Event.ENTER_FRAME,renderRequestedPets);
+         var requests:Array = petRequests;
+         petRequests = [];
+         for each(var request:Object in requests)
+         {
+            var pixels:Array = null;
+            try
+            {
+               pixels = renderPet(request.pet,request.size);
+            }
+            catch(error:Error)
+            {
+               pixels = null;
+            }
+            ExternalInterface.call("wildRevivalPet",request.id,pixels);
+         }
+      }
+
+      private function renderPet(pet:Object, size:int) : Array
+      {
+         if(!pet || !Ballistics.chassisObject[pet.type])
+         {
+            return null;
+         }
+         var animal:AnimalGraphics = new AnimalGraphics(new OwnedPet(pet));
+         var bounds:Rectangle = animal.getBounds(animal);
+         if(bounds.width == 0 || bounds.height == 0)
+         {
+            return null;
+         }
+         var scale:Number = size / Math.max(bounds.width,bounds.height);
+         var matrix:Matrix = new Matrix(scale,0,0,scale,(size - bounds.width * scale) / 2 - bounds.x * scale,(size - bounds.height * scale) / 2 - bounds.y * scale);
+         var bitmap:BitmapData = new BitmapData(size,size,true,0);
+         bitmap.draw(animal,matrix,null,null,null,true);
+         var bytes:ByteArray = bitmap.getPixels(bitmap.rect);
+         var pixels:Array = [];
+         bytes.position = 0;
+         while(bytes.bytesAvailable > 0)
+         {
+            pixels.push(bytes.readUnsignedInt());
+         }
+         return pixels;
+      }
+`;
+
 // Cambios al código del juego. Por cada clase: [qué buscar (expresión regular), por qué cambiarlo]. En el repo
 // solo está esto; el código original se exporta del SWF al armarlo
 const SCRIPT_PATCHES: Record<string, [RegExp, string][]> = {
+  // Mascotas para la web (ver PET_RENDERER): las clases que usa, las funciones y el registro de requestPet
+  Ballistics: [
+    [
+      /(import flash\.utils\.Timer;)/,
+      "$1\n   import flash.display.BitmapData;\n   import flash.geom.Matrix;\n   import flash.geom.Rectangle;\n" +
+        "   import flash.utils.ByteArray;\n   import com.playdom.ballistics.avatar.AnimalGraphics;",
+    ],
+    [
+      /(ExternalInterface\.addCallback\("onFriendInfo",\s*(?:this\.)?onFriendInfo\);)/,
+      '$1\n            ExternalInterface.addCallback("requestPet",requestPet);',
+    ],
+    // Modo retrato (parámetro petRenderer=1): carga datos y dibujos como siempre, pero no se conecta al lobby.
+    // Lo usa un segundo reproductor invisible de la página solo para dibujar mascotas, con un motor gráfico que
+    // sí sabe dibujar en BitmapData (el del juego, webgl, no)
+    [
+      /(appLauncher\.addEventListener\("onApplicationInitialized",\s*(?:Ballistics\.)?initLobbyConnection,\s*false,\s*0,\s*true\);)/,
+      'if(stage.loaderInfo.parameters.petRenderer != "1")\n         {\n            $1\n         }',
+    ],
+    [/(\n\s*private function preinit\()/, `\n${PET_RENDERER}$1`],
+  ],
   // Barra de vecinos de abajo (amigos de Facebook): se esconde en vez de quitarla porque otras partes del juego
   // la leen (Ballistics.ladder). Los amigos ya están en el panel de la web
   "com.playdom.ballistics.home.MainView": [
