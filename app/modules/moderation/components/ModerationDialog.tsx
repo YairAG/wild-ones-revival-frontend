@@ -2,6 +2,7 @@
 // las últimas acciones de los moderadores.
 import { ErrorMessage } from "@/components/ErrorMessage";
 import { Modal } from "@/components/Modal";
+import { reportReasonLabel } from "@/modules/profile/reasons";
 import { useModerationStore } from "../store";
 import type { ModerationLogEntry } from "../types";
 
@@ -35,11 +36,13 @@ function describe(entry: ModerationLogEntry) {
       );
     case "unmute":
       return `${mod.dname} le quitó el silencio a ${target.dname}`;
+    case "resolve_report":
+      return `${mod.dname} resolvió un reporte contra ${target.dname}`;
   }
 }
 
 export function ModerationDialog() {
-  const { open, summary, error, hide, unmute } = useModerationStore();
+  const { open, summary, error, hide, unmute, resolve } = useModerationStore();
   if (!open) return null;
 
   return (
@@ -48,6 +51,46 @@ export function ModerationDialog() {
       {!summary && !error && <p className="ayuda">Cargando...</p>}
       {summary && (
         <div className="flex max-h-[60svh] flex-col gap-4 overflow-y-auto">
+          <section>
+            <h3 className="text-micro mb-1 font-extrabold text-texto-secundario uppercase">
+              Reportes
+            </h3>
+            {summary.reports.length === 0 && <p className="ayuda">No hay reportes pendientes.</p>}
+            <ul className="flex flex-col gap-2">
+              {summary.reports.map((report) => (
+                <li
+                  key={report.id}
+                  className="flex flex-col gap-1 rounded-control border-2 border-borde-suave p-2.5"
+                >
+                  <span className="text-etiqueta [overflow-wrap:anywhere]">
+                    <b>{report.target.dname}</b> · {reportReasonLabel[report.reason]}
+                  </span>
+                  {report.message && (
+                    <span className="text-ayuda text-texto-cuerpo [overflow-wrap:anywhere]">
+                      <span className="chat-hora">{when(report.message.at)}</span>
+                      {`"${report.message.text}"`}
+                    </span>
+                  )}
+                  {report.details && (
+                    <span className="text-ayuda text-texto-cuerpo [overflow-wrap:anywhere]">
+                      {report.details}
+                    </span>
+                  )}
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="text-micro font-semibold text-texto-secundario">
+                      Reportó {report.from.dname} · {when(report.at)}
+                    </span>
+                    <button
+                      onClick={() => resolve(report.id)}
+                      className="btn btn-fila btn-secundario"
+                    >
+                      Resolver
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
           <section>
             <h3 className="text-micro mb-1 font-extrabold text-texto-secundario uppercase">
               Silenciados

@@ -4,6 +4,7 @@ import { testSession } from "@/modules/auth/helpers/test-session";
 import { useModerationStore } from "./store";
 
 const summary = {
+  reports: [],
   muted: [{ id: 2, dname: "Beto", until: "2026-01-01T13:00:00Z" }],
   log: [
     {
@@ -58,4 +59,12 @@ test("si no eres moderador se muestra el error del backend", async () => {
   mockBackend([403, { message: "Solo los moderadores pueden hacer eso", error: "NOT_MOD" }]);
   await useModerationStore.getState().load();
   expect(useModerationStore.getState().error).toBe("Solo los moderadores pueden hacer eso");
+});
+
+test("resolver un reporte usa POST /reports/:id/resolve y recarga", async () => {
+  const fetchMock = mockBackend([200], [200, summary]);
+  await useModerationStore.getState().resolve("r1");
+  expect(fetchMock.mock.calls[0][0]).toMatch(/\/reports\/r1\/resolve$/);
+  expect(fetchMock.mock.calls[0][1].method).toBe("POST");
+  expect(useModerationStore.getState().summary).toEqual(summary);
 });

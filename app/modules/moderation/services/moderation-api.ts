@@ -5,4 +5,5 @@ import type { ModerationSummary } from "../types";
 export const moderationApi = {
   summary: async () => (await request<ModerationSummary>("GET", "/chat/moderation")).data!,
   unmute: (id: number) => request("DELETE", `/chat/mutes/${id}`),
+  resolve: (reportId: string) => request("POST", `/reports/${reportId}/resolve`),
 };

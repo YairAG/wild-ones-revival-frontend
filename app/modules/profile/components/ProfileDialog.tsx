@@ -3,16 +3,11 @@
 import type { FormEvent } from "react";
 import { Modal } from "@/components/Modal";
 import { presenceLabel } from "@/modules/friends/presence";
+import { reportReasonLabel } from "../reasons";
 import { useProfileStore } from "../store";
 import type { PlayerProfile, ReportReason } from "../types";
 
-const REASONS: [ReportReason, string][] = [
-  ["harassment", "Lenguaje ofensivo o acoso"],
-  ["cheating", "Trampas o uso de hacks"],
-  ["inappropriate_name", "Nombre o contenido inapropiado"],
-  ["spam", "Spam o estafa"],
-  ["other", "Otro"],
-];
+const REASONS = Object.entries(reportReasonLabel) as [ReportReason, string][];
 
 const time = (iso: string) =>
   new Date(iso).toLocaleTimeString("es-MX", {
