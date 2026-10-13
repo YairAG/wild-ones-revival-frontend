@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 import { Modal } from "@/components/Modal";
 import { presenceLabel } from "@/modules/friends/presence";
+import { PetAvatar } from "@/modules/pets/components/PetAvatar";
 import { reportReasonLabel } from "../reasons";
 import { useProfileStore } from "../store";
 import type { PlayerProfile, ReportReason } from "../types";
@@ -68,8 +69,13 @@ function ProfileView({ profile, notice }: { profile: PlayerProfile; notice: stri
   return (
     <div>
       <div className="relative flex items-center gap-4 bg-cielo px-5.5 pt-5.5 pb-4.5 text-white">
-        <span className="flex size-19 shrink-0 items-center justify-center rounded-control border-3 border-madera bg-arena font-display text-3xl text-madera">
-          {profile.dname.slice(0, 2).toUpperCase()}
+        {/* Su mascota actual como la dibuja el juego; mientras, sus iniciales */}
+        <span className="flex size-19 shrink-0 items-center justify-center overflow-hidden rounded-control border-3 border-madera bg-arena font-display text-3xl text-madera">
+          <PetAvatar
+            pet={profile.pets.find((pet) => pet.current)}
+            size={70}
+            fallback={profile.dname.slice(0, 2).toUpperCase()}
+          />
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h2 className="truncate font-display text-[28px] leading-tight">{profile.dname}</h2>
@@ -98,13 +104,18 @@ function ProfileView({ profile, notice }: { profile: PlayerProfile; notice: stri
         {profile.pets.length > 0 && (
           <div className="flex flex-col gap-2">
             <span className="text-etiqueta font-extrabold">Mascotas</span>
-            <ul className="flex flex-wrap gap-2">
+            <ul className="grid grid-cols-4 gap-2">
               {profile.pets.map((pet, i) => (
-                <li
-                  key={i}
-                  className="text-ayuda rounded-control border-2 border-borde px-2.5 py-1 font-bold"
-                >
-                  {pet.name} <span className="text-texto-secundario">· {pet.type}</span>
+                <li key={i} className="flex flex-col items-center gap-1.5">
+                  <PetAvatar
+                    pet={pet}
+                    size={72}
+                    fallback={<span className="ayuda">{pet.type}</span>}
+                    className={`rounded-control border-2 bg-juego ${pet.current ? "border-madera" : "border-borde"}`}
+                  />
+                  <span className="text-ayuda w-full truncate text-center font-bold">
+                    {pet.name}
+                  </span>
                 </li>
               ))}
             </ul>

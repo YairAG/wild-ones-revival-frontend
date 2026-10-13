@@ -1,5 +1,6 @@
 // Cabecera de la pantalla del juego: logo, tu avatar con nombre y nivel (abre tu perfil), ajustes y salir.
 import { useAuthStore } from "@/modules/auth/store";
+import { PetAvatar } from "@/modules/pets/components/PetAvatar";
 import { useProfileStore } from "@/modules/profile/store";
 import { useSettingsStore } from "@/modules/settings/store";
 
@@ -11,7 +12,8 @@ function loadMeOnMount(element: HTMLElement | null) {
 export function GameHeader() {
   const session = useAuthStore((s) => s.session);
   const logout = useAuthStore((s) => s.logout);
-  const level = useProfileStore((s) => s.me?.level);
+  const me = useProfileStore((s) => s.me);
+  const level = me?.level;
   if (!session) return null;
 
   return (
@@ -26,8 +28,13 @@ export function GameHeader() {
           aria-label="Ver mi perfil"
           className="flex h-11 items-center gap-2.5 rounded-control pr-3 pl-1 text-left text-white hover:bg-cielo-profundo"
         >
-          <span className="flex size-9 items-center justify-center rounded-control border-2 border-madera bg-arena text-ayuda font-extrabold text-madera">
-            {session.dname.slice(0, 2).toUpperCase()}
+          {/* Tu mascota actual como la dibuja el juego; mientras, tus iniciales */}
+          <span className="flex size-9 items-center justify-center overflow-hidden rounded-control border-2 border-madera bg-arena text-ayuda font-extrabold text-madera">
+            <PetAvatar
+              pet={me?.pets.find((pet) => pet.current)}
+              size={32}
+              fallback={session.dname.slice(0, 2).toUpperCase()}
+            />
           </span>
           <span className="flex flex-col leading-tight">
             <span className="text-cuerpo font-extrabold">{session.dname}</span>

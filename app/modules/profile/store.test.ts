@@ -12,7 +12,17 @@ const beto: PlayerProfile = {
   losses: 2,
   gamecount: 9,
   presence: "lobby",
-  pets: [{ name: "Bolita", type: "dog" }],
+  pets: [
+    {
+      name: "Bolita",
+      type: "dog",
+      gender: "M",
+      color1: 7105644,
+      color2: 14803683,
+      accessories: [],
+      current: true,
+    },
+  ],
   mutualFriends: 1,
   relation: "none",
   blocked: false,

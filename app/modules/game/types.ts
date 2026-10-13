@@ -13,10 +13,14 @@ export type RuffleConfig = {
   unmuteOverlay?: "visible" | "hidden";
   letterbox?: "fullscreen" | "off" | "on";
   quality?: "low" | "medium" | "high";
+  allowScriptAccess?: boolean; // ExternalInterface entre el SWF y la página
 };
 
 export type RufflePlayerElement = HTMLElement & {
   ruffle(): { load(config: RuffleConfig): Promise<void>; volume: number }; // volume: 0 a 1
+  // Agregada por el parche del SWF (build-swf.ts): pide el dibujo de una mascota; responde con
+  // window.wildRevivalPet(id, píxeles). Aparece cuando el juego termina de arrancar
+  requestPet?(id: string, pet: object, size: number): void;
 };
 
 declare global {

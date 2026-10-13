@@ -27,7 +27,7 @@ const SWF_KNOWN_HOSTS = [
 const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /** Agrega el script de Ruffle a la página (una sola vez) */
-function loadRuffleScript(): Promise<void> {
+export function loadRuffleScript(): Promise<void> {
   if (window.RufflePlayer?.newest) return Promise.resolve();
   return new Promise((resolve, reject) => {
     const script = document.createElement("script");

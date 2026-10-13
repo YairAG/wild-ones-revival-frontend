@@ -1,5 +1,6 @@
 // Perfil de jugador y reportes (GET /players/:id y POST /reports del backend de cuentas).
 import type { Presence } from "@/modules/friends/types";
+import type { PetLook } from "@/modules/pets/types";
 
 /** Tu relación con el jugador: outgoing = le enviaste solicitud, incoming = él te la envió */
 export type Relation = "self" | "friends" | "outgoing" | "incoming" | "none";
@@ -12,7 +13,7 @@ export type PlayerProfile = {
   losses: number;
   gamecount: number; // partidas jugadas
   presence: Presence;
-  pets: { name: string; type: string }[];
+  pets: PetLook[]; // con lo necesario para dibujarlas; la actual tiene current: true
   mutualFriends: number;
   relation: Relation;
   blocked: boolean; // si tú lo bloqueaste
