@@ -76,6 +76,23 @@ const LABELS: Record<string, string> = {
   1864: "PIERNAS~",
   1867: "PIES~",
   1870: "OTROS~",
+  // Seleccionadas (en la tienda y en el baúl): icono arriba y la palabra en naranja debajo ("_")
+  1854: "CABEZA_~",
+  1857: "TORSO_~",
+  1865: "PIERNAS_~",
+  1868: "PIES_~",
+  1871: "OTROS_~",
+  2147: "CABEZA_~",
+  2150: "TORSO_~",
+  2153: "PIERNAS_~",
+  2156: "PIES_~",
+  2159: "OTROS_~",
+  // Baúl de accesorios (Mis mascotas): las mismas pestañas, sin seleccionar
+  2146: "CABEZA~",
+  2149: "TORSO~",
+  2152: "PIERNAS~",
+  2155: "PIES~",
+  2158: "OTROS~",
   1455: "ATRAS_~", // "_": la palabra está debajo de la flecha
   1456: "ATRAS_~",
 };

@@ -73,6 +73,8 @@ public class RedrawLabels {
       for (String[] p : paths) {
         Rectangle2D b = bounds(p[1]);
         if (!p[2].equals(last[2]) || b.getHeight() > height * 1.5) continue;
+        // "_": solo lo que está a la altura de la palabra (lo de arriba, p. ej. un icono, no es parte de ella)
+        if (lowest && b.getMinY() < bounds(last[1]).getMinY() - 3) continue;
         wordBounds = wordBounds == null ? b : wordBounds.createUnion(b);
       }
 
