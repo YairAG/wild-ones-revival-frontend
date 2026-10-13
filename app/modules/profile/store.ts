@@ -1,6 +1,7 @@
 // Perfil de jugador (modal): se abre al tocar un nombre en el chat o en amigos. Desde ahí se agrega, invita,
 // bloquea o reporta. Si se abrió desde un mensaje del chat, ese mensaje se adjunta al reporte.
 import { create } from "zustand";
+import { useAuthStore } from "@/modules/auth/store";
 import { friendsApi } from "@/modules/friends/services/friends-api";
 import { useFriendsStore } from "@/modules/friends/store";
 import { useInvitesStore } from "@/modules/invites/store";
@@ -9,6 +10,8 @@ import type { PlayerProfile, ProfileStep, ReportedMessage, ReportReason } from "
 
 type ProfileState = {
   playerId: number | null; // null: cerrado
+  me: PlayerProfile | null; // tu propio perfil (la cabecera muestra tu nivel)
+  loadMe(): Promise<void>;
   message: ReportedMessage | null;
   profile: PlayerProfile | null; // null: cargando
   step: ProfileStep;
@@ -27,7 +30,8 @@ export const useProfileStore = create<ProfileState>((set, get) => {
     const id = get().playerId;
     if (id === null) return;
     try {
-      set({ profile: await profileApi.get(id) });
+      const profile = await profileApi.get(id);
+      set({ profile, ...(profile.relation === "self" && { me: profile }) });
     } catch (e) {
       set({ notice: (e as Error).message });
     }
@@ -45,6 +49,16 @@ export const useProfileStore = create<ProfileState>((set, get) => {
 
   return {
     playerId: null,
+    me: null,
+    async loadMe() {
+      const id = useAuthStore.getState().session?.id;
+      if (id === undefined) return;
+      try {
+        set({ me: await profileApi.get(id) });
+      } catch {
+        // la cabecera se queda sin nivel; no es grave
+      }
+    },
     message: null,
     profile: null,
     step: "profile",

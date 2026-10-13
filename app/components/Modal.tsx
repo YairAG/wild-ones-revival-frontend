@@ -1,5 +1,5 @@
 // Ventana modal del sistema de diseño (.modal) sobre un fondo oscuro. Usa el <dialog> del navegador: atrapa
-// el foco, bloquea lo de atrás y se cierra con Esc (entonces llama a onClose). Se abre al montarse y se
+// el foco y bloquea lo de atrás; con Esc llama a onClose (y quien lo muestra lo quita). Se abre al montarse y se
 // cierra al desmontarse, así que se muestra con un simple {abierto && <Modal ... />}.
 // `bare`: el contenido trae su propio encabezado y márgenes (p. ej. el perfil, con su franja azul); el título
 // queda solo para lectores de pantalla.
@@ -23,7 +23,11 @@ export function Modal({ title, onClose, children, wide, bare }: Props) {
   return (
     <dialog
       ref={openOnMount}
-      onClose={onClose}
+      // Esc: lo cierra React (quitando el modal) en vez del navegador, que avisaría después con "close"
+      onCancel={(e) => {
+        e.preventDefault();
+        onClose();
+      }}
       aria-labelledby={bare ? undefined : titleId}
       aria-label={bare ? title : undefined}
       className={`modal m-auto w-[calc(100%-2rem)] overflow-hidden p-0 text-texto backdrop:bg-[rgb(22_38_48/0.6)] ${wide ? "max-w-xl" : "max-w-sm"}`}
