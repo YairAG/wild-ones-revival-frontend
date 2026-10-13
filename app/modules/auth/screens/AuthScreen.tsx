@@ -1,7 +1,8 @@
 // Pantalla de inicio: entrar o crear cuenta, con el último parche al lado.
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Scene } from "@/components/Scene";
 import { LatestReleaseCard } from "@/modules/changelog/components/LatestReleaseCard";
+import { LEGAL_DOCS } from "@/modules/legal/content";
 import { AuthForm } from "../components/AuthForm";
 import { useAuthStore } from "../store";
 
@@ -50,8 +51,13 @@ export function AuthScreen() {
         </div>
       </main>
 
-      <footer className="relative px-6 pt-3.5 pb-4.5 text-ayuda font-semibold text-texto">
-        Proyecto sin fines de lucro. No afiliado a los dueños originales del juego.
+      <footer className="relative flex flex-wrap items-center gap-x-4 gap-y-1 px-6 pt-3.5 pb-4.5 text-ayuda font-semibold text-texto">
+        <span>Proyecto sin fines de lucro. No afiliado a los dueños originales del juego.</span>
+        {LEGAL_DOCS.map((doc) => (
+          <Link key={doc.path} to={doc.path} className="font-extrabold">
+            {doc.title}
+          </Link>
+        ))}
       </footer>
     </Scene>
   );

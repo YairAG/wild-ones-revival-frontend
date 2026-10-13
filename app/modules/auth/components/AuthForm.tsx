@@ -112,8 +112,21 @@ export function AuthForm({ onSuccess }: { onSuccess(): void }) {
               required
               className="mt-0.5 size-4.5 shrink-0 accent-naranja"
             />
+            {/* En otra pestaña: así no se pierde lo que ya escribió */}
             <span>
-              Acepto las reglas de la comunidad, la política de privacidad y los términos de uso.
+              Acepto las{" "}
+              <a href="/reglas" target="_blank" className="font-extrabold">
+                reglas de la comunidad
+              </a>
+              , el{" "}
+              <a href="/privacidad" target="_blank" className="font-extrabold">
+                aviso de privacidad
+              </a>{" "}
+              y los{" "}
+              <a href="/terminos" target="_blank" className="font-extrabold">
+                términos de uso
+              </a>
+              .
             </span>
           </label>
         </>

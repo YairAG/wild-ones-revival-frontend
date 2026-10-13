@@ -93,6 +93,8 @@ app/
       screens/ · components/ · services/ (backend de cuentas) · store.ts · types.ts
     game/                el juego original en Ruffle
       screens/GameScreen.tsx · services/ruffle.ts · store.ts · types.ts
+    legal/               reglas, términos y aviso de privacidad (/reglas, /terminos, /privacidad)
+      content/ (los textos) · config.ts (responsable y contacto, PENDIENTES) · screens/LegalScreen.tsx
   components/            UI reutilizable (Button, TextInput, ErrorMessage)
   services/              servicios compartidos entre módulos
   routes/                rutas (React Router) y loaders (protegen rutas)
