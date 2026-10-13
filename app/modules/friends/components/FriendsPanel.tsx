@@ -1,67 +1,121 @@
+// Panel de amigos: lista con presencia, solicitudes y formulario para agregar por nombre.
+import type { FormEvent } from "react";
+import { ErrorMessage } from "@/components/ErrorMessage";
 import { Panel } from "@/components/Panel";
-import { friends, requests } from "../mocks";
+import { useFriendsStore } from "../store";
+import type { Presence } from "../types";
+
+const presenceLabel: Record<Presence, string> = {
+  playing: "En partida",
+  lobby: "En lobby",
+  offline: "Desconectado",
+};
+
+// Ref de callback fuera del componente (siempre la misma): mientras el panel está en pantalla, la lista
+// se recarga sola; al quitarlo, React llama a la función que devuelve y se detiene
+function refreshWhileVisible(element: HTMLDivElement | null) {
+  if (element) return useFriendsStore.getState().startRefreshing();
+}
+
+async function addFriend(e: FormEvent<HTMLFormElement>) {
+  e.preventDefault();
+  const form = e.currentTarget;
+  const dname = String(new FormData(form).get("dname")).trim();
+  if (dname && (await useFriendsStore.getState().send(dname))) form.reset();
+}
 
 export function FriendsPanel() {
-  const online = friends.filter((friend) => friend.online).length;
+  const { list, error, accept, dismiss } = useFriendsStore();
+  const online = list.friends.filter((friend) => friend.presence !== "offline").length;
 
   return (
     <Panel
       title="Amigos"
       badge={<span className="text-ayuda font-extrabold text-cielo">En línea · {online}</span>}
       footer={
-        <>
+        <form onSubmit={addFriend} className="flex w-full gap-2">
           <label htmlFor="agregar-amigo" className="sr-only">
             Nombre del jugador
           </label>
           <input
             id="agregar-amigo"
-            disabled
+            name="dname"
             placeholder="Nombre del jugador"
+            maxLength={16}
+            autoComplete="off"
             className="campo min-w-0 flex-1"
           />
-          <button disabled className="btn btn-secundario">
-            Agregar
-          </button>
-        </>
+          <button className="btn btn-secundario">Agregar</button>
+        </form>
       }
     >
-      {requests.length > 0 && (
-        <div className="mb-3 flex flex-col">
-          <h3 className="text-micro mb-1 font-extrabold text-texto-secundario uppercase">
-            Solicitudes
-          </h3>
-          {requests.map((request) => (
-            <div key={request.id} className="flex min-h-11 items-center justify-between gap-2">
-              <span className="text-cuerpo font-bold">{request.dname}</span>
-              <span className="flex gap-1.5">
-                <button disabled className="btn btn-fila btn-secundario">
-                  Aceptar
-                </button>
-                <button disabled className="btn btn-fila btn-secundario">
-                  Rechazar
-                </button>
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      <div ref={refreshWhileVisible} className="flex flex-col gap-3">
+        <ErrorMessage message={error} />
 
-      <h3 className="text-micro mb-1 font-extrabold text-texto-secundario uppercase">Amigos</h3>
-      {friends.map((friend) => (
-        <div key={friend.id} className="flex min-h-11 items-center gap-2.5">
-          <span className={`estado ${friend.online ? "estado-en-linea" : "estado-desconectado"}`} />
-          <span className="flex min-w-0 flex-1 flex-col leading-tight">
-            <span
-              className={`text-cuerpo truncate font-bold ${friend.online ? "text-texto" : "text-texto-terciario"}`}
-            >
-              {friend.dname}
-            </span>
-            <span className="text-micro font-semibold text-texto-secundario">
-              {friend.online ? "En línea" : "Desconectado"} · Nivel {friend.level}
-            </span>
-          </span>
-        </div>
-      ))}
+        {list.incoming.length > 0 && (
+          <section>
+            <h3 className="text-micro mb-1 font-extrabold text-texto-secundario uppercase">
+              Te quieren agregar
+            </h3>
+            {list.incoming.map((player) => (
+              <div key={player.id} className="flex min-h-11 items-center justify-between gap-2">
+                <span className="text-cuerpo font-bold">{player.dname}</span>
+                <span className="flex gap-1.5">
+                  <button onClick={() => accept(player.id)} className="btn btn-fila btn-secundario">
+                    Aceptar
+                  </button>
+                  <button onClick={() => dismiss(player.id)} className="btn btn-fila btn-texto">
+                    Rechazar
+                  </button>
+                </span>
+              </div>
+            ))}
+          </section>
+        )}
+
+        <section>
+          <h3 className="text-micro mb-1 font-extrabold text-texto-secundario uppercase">Amigos</h3>
+          {list.friends.length === 0 && (
+            <p className="ayuda">Todavía no tienes amigos. Agrégalos por su nombre abajo.</p>
+          )}
+          {list.friends.map((friend) => {
+            const isOnline = friend.presence !== "offline";
+            return (
+              <div key={friend.id} className="flex min-h-11 items-center gap-2.5">
+                <span
+                  className={`estado ${isOnline ? "estado-en-linea" : "estado-desconectado"}`}
+                />
+                <span className="flex min-w-0 flex-1 flex-col leading-tight">
+                  <span
+                    className={`text-cuerpo truncate font-bold ${isOnline ? "text-texto" : "text-texto-terciario"}`}
+                  >
+                    {friend.dname}
+                  </span>
+                  <span className="text-micro font-semibold text-texto-secundario">
+                    {presenceLabel[friend.presence]} · Nivel {friend.level}
+                  </span>
+                </span>
+              </div>
+            );
+          })}
+        </section>
+
+        {list.outgoing.length > 0 && (
+          <section>
+            <h3 className="text-micro mb-1 font-extrabold text-texto-secundario uppercase">
+              Solicitudes enviadas
+            </h3>
+            {list.outgoing.map((player) => (
+              <div key={player.id} className="flex min-h-11 items-center justify-between gap-2">
+                <span className="text-cuerpo font-bold text-texto-terciario">{player.dname}</span>
+                <button onClick={() => dismiss(player.id)} className="btn btn-fila btn-texto">
+                  Cancelar
+                </button>
+              </div>
+            ))}
+          </section>
+        )}
+      </div>
     </Panel>
   );
 }
