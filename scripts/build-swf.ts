@@ -87,7 +87,8 @@ const PET_RENDERER = `
 
       private function petsReady() : Boolean
       {
-         return Boolean(Ballistics.assets) && Boolean(Ballistics.chassisObject) && Boolean(Ballistics.accessoriesObject) && Ballistics.assets.makeLibraryDisplayObject("dog_idle") != null;
+         // Toda la precarga terminada: los dibujos de mascotas llegan antes que los de la ropa
+         return Boolean(Ballistics.assets) && !AssetManager.is_preloading && Boolean(Ballistics.chassisObject) && Boolean(Ballistics.accessoriesObject);
       }
 
       private function renderRequestedPets(e:Event) : void
