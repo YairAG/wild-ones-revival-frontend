@@ -55,6 +55,14 @@ if (ALL_PETS_AT_LEVEL_0) {
   for (const level of levels) delete level.chassis;
   levels[0].chassis = pets.map((pet) => pet.type);
 }
+// Los poderes de mascota son armas (petWeapon en WeaponsGrid), y el cliente solo muestra los que tienes. Las
+// del nivel 0 ("weapon") las tienen todos; el original solo traía ahí las de las mascotas que daba por nivel.
+// El cliente ya filtra por la mascota actual.
+const grid: { type: string; petWeapon?: boolean }[] = JSON.parse(
+  readFileSync(`${ORIGINALS}/WeaponsGrid.dat`, "utf8"),
+);
+const powers = grid.filter((weapon) => weapon.petWeapon).map((weapon) => weapon.type);
+levels[0].weapon = [...new Set([...levels[0].weapon, ...powers])];
 writeFileSync(`${OUTPUT}/Levels.dat`, JSON.stringify(levels, null, "\t"));
 
 mkdirSync("public/game/translations", { recursive: true });
