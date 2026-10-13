@@ -195,6 +195,15 @@ const SCRIPT_PATCHES: Record<string, [RegExp, string][]> = {
   "com.playdom.ballistics.avatar.Avatar": [
     [/Sounds\.playScratch\(\)/, 'Sounds.playSound("CatPower_Scratch.mp3")'],
     [/AnimalGraphics\.SCRATCH/, '"_scratch"'],
+    // battle (canguro) es un punch (baseType), pero processPunch siempre usaba los datos, el dibujo y el
+    // sonido del panda. Ahora recibe el tipo y usa los suyos (daño 650, kangaroo_battle, battle.mp3)
+    [/public function processPunch\(\)/, 'public function processPunch(type:String = "punch")'],
+    [/Ballistics\.weaponObject\["punch"\]/, "Ballistics.weaponObject[type]"],
+    [
+      /Sounds\.playSmack\(\);/,
+      'if(type == "punch") Sounds.playSmack(); else Sounds.playSound(type + ".mp3");',
+    ],
+    [/AnimalGraphics\.PUNCH;/, 'type == "punch" ? AnimalGraphics.PUNCH : "_" + type;'],
   ],
   "com.playdom.ballistics.weapons.Earthquake": [
     [/Sounds\.playDinoquake\(\)/g, 'Sounds.playSound("dinoquake.mp3")'],
@@ -202,8 +211,8 @@ const SCRIPT_PATCHES: Record<string, [RegExp, string][]> = {
   "com.playdom.ballistics.weapons.MakeWeapon": [
     [/("earthquake":Earthquake,)/, '$1\n         "dinoquake":Earthquake,'],
     [
-      /(else if\(classType == "punch"\)\s*\{\s*source\.processPunch\(\);\s*\})/,
-      '$1\n         else if(classType == "scratch")\n         {\n            source.processScratch();\n         }',
+      /(else if\(classType == "punch"\)\s*\{\s*source\.processPunch\()(\);\s*\})/,
+      '$1type$2\n         else if(classType == "scratch")\n         {\n            source.processScratch();\n         }',
     ],
   ],
 };
