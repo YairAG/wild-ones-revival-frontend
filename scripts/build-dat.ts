@@ -47,11 +47,15 @@ for (const [file, fields] of Object.entries(FIELDS)) {
 const levels = JSON.parse(readFileSync(`${ORIGINALS}/Levels.dat`, "utf8"));
 // Los poderes de mascota son armas (petWeapon en WeaponsGrid), y el cliente solo muestra los que tienes. Las
 // del nivel 0 ("weapon") las tienen todos; el original solo traía ahí las de las mascotas que daba por nivel.
-// El cliente ya filtra por la mascota actual.
-const grid: { type: string; petWeapon?: boolean }[] = JSON.parse(
+// El cliente ya filtra por la mascota actual. Si su baseType no es un arma del .dat, el cliente descarta el
+// poder y truena al equiparlo (pasa con fishspit, baseType "spit")
+const grid: { type: string; petWeapon?: boolean; baseType?: string }[] = JSON.parse(
   readFileSync(`${ORIGINALS}/WeaponsGrid.dat`, "utf8"),
 );
-const powers = grid.filter((weapon) => weapon.petWeapon).map((weapon) => weapon.type);
+const types = grid.map((weapon) => weapon.type);
+const powers = grid
+  .filter((weapon) => weapon.petWeapon && (!weapon.baseType || types.includes(weapon.baseType)))
+  .map((weapon) => weapon.type);
 levels[0].weapon = [...new Set([...levels[0].weapon, ...powers])];
 // La tienda solo ofrece las mascotas que Levels.dat desbloquea ("chassis") y las que ya tienes. El original
 // daba 7 por nivel y las demás llegaban por otro lado (no sabemos cómo). Se venden desde el nivel 0 las que
