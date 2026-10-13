@@ -55,11 +55,12 @@ export function GameScreen() {
           <FriendsPanel />
           <ChangelogPanel />
         </aside>
-        {/* El escenario del SWF mide 760 x 740: el reproductor tiene esa proporción. En xl usa toda la altura;
-            si no, todo el ancho, pero sin pasar del alto de la ventana (menos el encabezado y márgenes) */}
+        {/* El escenario del SWF mide 760 x 555 (recortado en scripts/build-swf.ts): el reproductor tiene esa
+            proporción. Usa todo el ancho, pero sin pasar del alto de la ventana (menos el encabezado y márgenes);
+            en xl además deja 18rem a cada panel */}
         <div
           ref={gameContainer}
-          className="order-first mx-auto aspect-[760/740] w-[min(100%,calc((100svh_-_7rem)*760/740))] marco-juego overflow-hidden md:col-span-2 xl:order-none xl:mx-0 xl:h-full xl:w-auto xl:max-w-full"
+          className="order-first mx-auto aspect-[760/555] w-[min(100%,calc((100svh_-_7rem)*760/555))] marco-juego overflow-hidden md:col-span-2 xl:order-none xl:mx-0 xl:w-[min(calc(100%_-_38rem),calc((100svh_-_7rem)*760/555))] xl:shrink-0 xl:self-center"
         />
         <aside className="flex h-[32rem] min-w-0 flex-col xl:h-auto xl:flex-1">
           <GlobalChatPanel />
