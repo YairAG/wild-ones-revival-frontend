@@ -54,6 +54,20 @@ const LABELS: Record<string, string> = {
   1427: "TIENDA",
   206: "TIENDA",
   932: "DIA", // calendario de la Mision Laser
+  // Tienda: el título y los cuatro cajones, cerrados (palabra blanca) y abiertos al pasar el mouse (naranja;
+  // mapas y accesorios traen además una blanca). MAPAS no se ve: el juego esconde ese cajón. ">" alinea a la
+  // derecha, como el original (las palabras en español son más largas y se salían del botón)
+  1633: "TIENDA",
+  1635: "ARMAS>",
+  1644: "ARMAS>",
+  1659: "MASCOTAS>",
+  1699: "MASCOTAS>",
+  1724: "MAPAS>",
+  1728: "MAPAS>",
+  1748: "MAPAS>",
+  1752: "ACCESORIOS>",
+  1807: "ACCESORIOS>",
+  1809: "ACCESORIOS>",
 };
 // Fondos que se alargan para que quepa el texto en español: "<id>*<veces más ancho>" o "<id>@<y0>:<y1>+<px>"
 // por renglón (ver RedrawLabels.java). 195: etiquetas de inicio (MULTIJUGADOR, MIS MASCOTAS, TIENDA);

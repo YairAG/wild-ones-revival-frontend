@@ -1,6 +1,7 @@
 // Redibuja palabras que en el SWF son dibujos (no texto), p. ej. "HOME" junto al ícono del menú.
 // En cada dibujo, la palabra es la figura que está más a la derecha: se quita y se dibuja la nueva palabra
-// con la fuente dada, a la misma altura, posición y color.
+// con la fuente dada, a la misma altura, posición y color (si tiene varias capas, como una sombra, cada una).
+// Con "<id>=<PALABRA>>" la nueva queda alineada a la derecha, donde terminaba la vieja.
 //
 //   java -cp "<carpeta de JPEXS>/lib/*" scripts/swf/RedrawLabels.java <entrada.swf> <salida.swf> \
 //        <carpeta con los SVG exportados> <fuente.ttf> <id>=<PALABRA> ...
@@ -62,14 +63,42 @@ public class RedrawLabels {
         Rectangle2D b = bounds(p[1]);
         if (!p[2].equals(last[2]) || b.getHeight() > height * 1.5) continue;
         wordBounds = wordBounds == null ? b : wordBounds.createUnion(b);
+      }
+
+      // Capas de la palabra (p. ej. letras naranjas con su sombra negra un poco corrida): las figuras de cualquier
+      // color que caen dentro de la palabra. Cada capa se redibuja con su color y su desplazamiento, en su orden
+      Rectangle2D area = new Rectangle2D.Double(wordBounds.getX() - 3, wordBounds.getY() - 3,
+          wordBounds.getWidth() + 6, wordBounds.getHeight() + 6);
+      java.util.Map<String, Rectangle2D> layers = new java.util.LinkedHashMap<>();
+      for (String[] p : paths) {
+        Rectangle2D b = bounds(p[1]);
+        if (!area.contains(b)) continue;
+        layers.merge(p[2], b, Rectangle2D::createUnion);
         svg = svg.replace(p[0], "");
       }
 
-      String newOutline = outline(font, pair[1], wordBounds);
-      String newPath = "<path d=\"" + newOutline + "\" fill=\"" + last[2] + "\" stroke=\"none\"/>";
-      System.out.printf(Locale.ROOT, "%s: la palabra terminaba en x=%.1f y ahora en x=%.1f (px)%n", pair[0],
-          wordBounds.getMaxX(), bounds(newOutline).getMaxX());
-      importAt(swf, pair[0], svg.replace("</g>", newPath + "</g>"), 1);
+      // "PALABRA>": alineada a la derecha (termina donde terminaba la vieja); si no, empieza donde empezaba
+      boolean alignRight = pair[1].endsWith(">");
+      String word = alignRight ? pair[1].substring(0, pair[1].length() - 1) : pair[1];
+      StringBuilder newPaths = new StringBuilder();
+      double endX = -Double.MAX_VALUE;
+      for (var layer : layers.entrySet()) {
+        Rectangle2D b = layer.getValue();
+        // Misma escala para todas las capas (la de la palabra): solo cambia dónde empieza cada una
+        Rectangle2D target = new Rectangle2D.Double(b.getMinX(), b.getMaxY() - wordBounds.getHeight(),
+            wordBounds.getWidth(), wordBounds.getHeight());
+        String newOutline = outline(font, word, target);
+        if (alignRight) {
+          double dx = b.getMaxX() - bounds(newOutline).getMaxX();
+          target.setRect(target.getX() + dx, target.getY(), target.getWidth(), target.getHeight());
+          newOutline = outline(font, word, target);
+        }
+        newPaths.append("<path d=\"" + newOutline + "\" fill=\"" + layer.getKey() + "\" stroke=\"none\"/>");
+        endX = Math.max(endX, bounds(newOutline).getMaxX());
+      }
+      System.out.printf(Locale.ROOT, "%s: la palabra terminaba en x=%.1f y ahora en x=%.1f (px), %d capa(s)%n",
+          pair[0], wordBounds.getMaxX(), endX, layers.size());
+      importAt(swf, pair[0], svg.replace("</g>", newPaths + "</g>"), 1);
       System.out.println(pair[0] + ": " + pair[1]);
     }
 
