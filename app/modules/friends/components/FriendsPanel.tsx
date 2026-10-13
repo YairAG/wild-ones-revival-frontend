@@ -2,6 +2,7 @@
 import type { FormEvent } from "react";
 import { ErrorMessage } from "@/components/ErrorMessage";
 import { Panel } from "@/components/Panel";
+import { useInvitesStore } from "@/modules/invites/store";
 import { useFriendsStore } from "../store";
 import type { Presence } from "../types";
 
@@ -111,6 +112,15 @@ export function FriendsPanel() {
                     {presenceLabel[friend.presence]} · Nivel {friend.level}
                   </span>
                 </span>
+                {/* Solo se puede invitar a quien está en el lobby del juego */}
+                {friend.presence === "lobby" && (
+                  <button
+                    onClick={() => useInvitesStore.getState().invite(friend.id)}
+                    className="btn btn-fila btn-secundario"
+                  >
+                    Invitar
+                  </button>
+                )}
                 <button
                   onClick={() => askRemove(friend.id)}
                   aria-label={`Quitar a ${friend.dname}`}

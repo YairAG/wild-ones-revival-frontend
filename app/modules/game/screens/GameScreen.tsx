@@ -5,6 +5,7 @@ import { useAuthStore } from "@/modules/auth/store";
 import { ChangelogPanel } from "@/modules/changelog/components/ChangelogPanel";
 import { GlobalChatPanel } from "@/modules/chat/components/GlobalChatPanel";
 import { FriendsPanel } from "@/modules/friends/components/FriendsPanel";
+import { InviteToast } from "@/modules/invites/components/InviteToast";
 import { useGameStore } from "../store";
 
 // Ref de callback: React la llama cuando el div aparece y la función que devuelve cuando se va.
@@ -46,6 +47,7 @@ export function GameScreen() {
         </nav>
       </header>
       <ErrorMessage message={error} />
+      <InviteToast />
       {/* Pantalla ancha (xl): amigos y notas | juego | chat, sin scroll.
           Más angosta: el juego arriba y los paneles abajo (en dos columnas desde md), con scroll de página */}
       <main className="grid gap-4 p-4 md:grid-cols-2 xl:flex xl:min-h-0 xl:flex-1">
