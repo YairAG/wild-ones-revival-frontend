@@ -34,7 +34,9 @@ export const useInvitesStore = create<InvitesState>((set, get) => {
       case "invite_sent":
       case "invite_accepted":
       case "invite_declined":
+        return notify(message.message);
       case "error":
+        if (message.error === "SESSION_EXPIRED") return useAuthStore.getState().expire();
         return notify(message.message);
     }
   }

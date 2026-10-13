@@ -1,5 +1,5 @@
 // El juego original (lobby, sala de espera, partidas) corriendo en Ruffle.
-import { useNavigate } from "react-router";
+import { Navigate } from "react-router";
 import { ErrorMessage } from "@/components/ErrorMessage";
 import { useAuthStore } from "@/modules/auth/store";
 import { ChangelogPanel } from "@/modules/changelog/components/ChangelogPanel";
@@ -21,13 +21,10 @@ export function GameScreen() {
   const session = useAuthStore((s) => s.session);
   const logout = useAuthStore((s) => s.logout);
   const error = useGameStore((s) => s.error);
-  const navigate = useNavigate();
 
-  function exit() {
-    useGameStore.getState().unmount();
-    logout();
-    navigate("/login");
-  }
+  // Sin sesión (cerró sesión o expiró) vuelve al login. Al desmontarse esta pantalla, las refs de callback
+  // cierran el juego y las conexiones
+  if (!session) return <Navigate to="/login" replace />;
 
   return (
     <div className="flex min-h-screen flex-col xl:h-screen">
@@ -37,11 +34,11 @@ export function GameScreen() {
           {/* Avatar con las iniciales y el nombre */}
           <span className="flex items-center gap-2.5 text-white">
             <span className="flex size-9 items-center justify-center rounded-control border-2 border-madera bg-arena text-ayuda font-extrabold text-madera">
-              {session?.dname.slice(0, 2).toUpperCase()}
+              {session.dname.slice(0, 2).toUpperCase()}
             </span>
-            <span className="text-cuerpo font-extrabold">{session?.dname}</span>
+            <span className="text-cuerpo font-extrabold">{session.dname}</span>
           </span>
-          <button onClick={exit} className="btn btn-compacto bg-cielo-profundo text-white">
+          <button onClick={logout} className="btn btn-compacto bg-cielo-profundo text-white">
             Cerrar sesión
           </button>
         </nav>

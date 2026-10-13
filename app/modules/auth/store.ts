@@ -13,6 +13,7 @@ type AuthState = {
   toggleMode(): void;
   submit(dname: string, password: string): Promise<boolean>;
   logout(): void;
+  expire(): void; // el backend dijo SESSION_EXPIRED: sale y el login lo explica
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -40,6 +41,7 @@ export const useAuthStore = create<AuthState>()(
 
       // Al salir, el formulario vuelve a "entrar"
       logout: () => set({ session: null, mode: "login", error: null }),
+      expire: () => set({ session: null, mode: "login", error: "Tu sesión expiró, vuelve a entrar" }),
     }),
     // Clave en localStorage; solo se guarda la sesión (no el modo ni los errores)
     { name: "wildones-session", partialize: (s) => ({ session: s.session }) },

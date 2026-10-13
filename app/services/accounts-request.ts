@@ -36,6 +36,9 @@ export async function accountsRequest<T = undefined>(
   } catch {
     throw new ApiError("No se pudo conectar con el servidor", "NETWORK_ERROR", 0);
   }
-  if (!res.ok) throw new ApiError(res.message, res.error, res.code);
+  if (!res.ok) {
+    if (res.error === "SESSION_EXPIRED") useAuthStore.getState().expire(); // GameScreen manda al login
+    throw new ApiError(res.message, res.error, res.code);
+  }
   return res;
 }

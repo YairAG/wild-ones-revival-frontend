@@ -26,6 +26,15 @@ test("un error del backend se lanza como ApiError con message, error y code", as
   expect(error).toMatchObject({ message: "Tu sesión expiró", error: "SESSION_EXPIRED", code: 401 });
 });
 
+test("SESSION_EXPIRED cierra la sesión y deja el aviso para el login", async () => {
+  useAuthStore.setState({ session: { id: 1, dname: "Ana", token: "jwt" } });
+  const body = { ok: false, code: 401, message: "x", error: "SESSION_EXPIRED" };
+  vi.stubGlobal("fetch", async () => ({ ok: false, json: async () => body }));
+  await accountsRequest("GET", "/friends").catch(() => {});
+  expect(useAuthStore.getState().session).toBeNull();
+  expect(useAuthStore.getState().error).toBe("Tu sesión expiró, vuelve a entrar");
+});
+
 test("si no hay conexión con el servidor, NETWORK_ERROR", async () => {
   vi.stubGlobal("fetch", async () => {
     throw new TypeError("Failed to fetch");

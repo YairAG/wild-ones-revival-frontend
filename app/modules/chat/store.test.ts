@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { useAuthStore } from "@/modules/auth/store";
 import type { ChatMessage, ChatServerEvent } from "./types";
 
 // Conexión simulada: guarda lo que se envía y deja "recibir" eventos del servidor o cortarla
@@ -78,4 +79,10 @@ test("si se cae la conexión deja de estar conectado", () => {
   receive({ type: "history", messages: [], mod: true });
   drop();
   expect(useChatStore.getState().connected).toBe(false);
+});
+
+test("si el servidor dice SESSION_EXPIRED, se cierra la sesión", () => {
+  useAuthStore.setState({ session: { id: 1, dname: "Ana", token: "jwt" } });
+  receive({ type: "error", ok: false, code: 401, message: "x", error: "SESSION_EXPIRED" });
+  expect(useAuthStore.getState().session).toBeNull();
 });

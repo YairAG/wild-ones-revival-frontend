@@ -48,8 +48,10 @@ export const useChatStore = create<ChatState>((set, get) => {
         return set({ messages: [...get().messages, event.message] });
       case "deleted":
         return set({ messages: get().messages.filter((m) => m.id !== event.id) });
-      case "notice":
       case "error":
+        if (event.error === "SESSION_EXPIRED") return useAuthStore.getState().expire();
+        return notify(event.message);
+      case "notice":
         return notify(event.message);
     }
   }
