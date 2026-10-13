@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { testSession } from "@/modules/auth/helpers/test-session";
+import { useAuthStore } from "@/modules/auth/store";
 import { readMessages } from "./services/social-connection";
 import type { SocialServerMessage } from "./types";
 
@@ -26,10 +28,13 @@ const { useGameStore } = await import("@/modules/game/store");
 const ok = (message: string) => ({ ok: true as const, code: 200, message });
 let close: () => void;
 
-beforeEach(() => {
+// connect pide antes un token vigente (async): se espera a que abra la conexión
+beforeEach(async () => {
   sent.length = 0;
+  useAuthStore.setState({ session: testSession });
   useInvitesStore.setState({ incoming: null, notice: null });
   close = useInvitesStore.getState().connect();
+  await new Promise((resolve) => setTimeout(resolve));
 });
 afterEach(() => close());
 
@@ -74,13 +79,13 @@ test("los avisos para quien invita se quitan solos a los 5 s", () => {
   vi.useRealTimers();
 });
 
-test("si se cae la conexión reintenta a los 5 s; al volver, recarga el juego", () => {
+test("si se cae la conexión reintenta a los 5 s; al volver, recarga el juego", async () => {
   vi.useFakeTimers();
   const restart = vi.spyOn(useGameStore.getState(), "restart").mockImplementation(() => {});
   const before = opened;
   drop();
   expect(useInvitesStore.getState().reconnect).toMatchObject({ lost: true, secondsLeft: 5 });
-  vi.advanceTimersByTime(5_000);
+  await vi.advanceTimersByTimeAsync(5_000);
   expect(opened).toBe(before + 1);
 
   receive({ command: "social_ready", ...ok("Conectado") });

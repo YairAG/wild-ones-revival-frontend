@@ -44,9 +44,12 @@ export const useChatStore = create<ChatState>((set, get) => {
     noticeTimer = setTimeout(() => set({ notice: null }), NOTICE_MS);
   }
 
-  // Abre la conexión con el token actual. Si se cierra sola (servidor caído, sin red), se reintenta
-  function open() {
-    const token = useAuthStore.getState().session?.token ?? "";
+  // Abre la conexión con un token vigente. Si se cierra sola (servidor caído, sin red), se reintenta.
+  // `active`: si el panel ya se quitó mientras se renovaba el token, no se abre
+  let active = false;
+  async function open() {
+    const token = await useAuthStore.getState().freshToken();
+    if (!token || !active) return;
     connection = openChatConnection(token, handle, () => {
       set({ connected: false });
       reconnector.dropped();
@@ -80,8 +83,10 @@ export const useChatStore = create<ChatState>((set, get) => {
     notice: null,
 
     connect() {
-      open();
+      active = true;
+      void open();
       return () => {
+        active = false;
         reconnector.stop();
         set({ reconnect: CONNECTED });
         connection?.close();

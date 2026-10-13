@@ -1,35 +1,56 @@
 import { beforeEach, expect, test, vi } from "vitest";
+import { testSession } from "@/modules/auth/helpers/test-session";
 import { useAuthStore } from "@/modules/auth/store";
 import { accountsRequest, ApiError } from "./accounts-request";
 
-beforeEach(() => useAuthStore.setState({ session: null }));
-
-test("devuelve la respuesta completa y manda el token solo si hay sesión", async () => {
-  const body = { ok: true, code: 200, message: "Lista de amigos", data: { friends: [] } };
-  const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => body });
+// fetch simulado: cada llamada responde el siguiente body de la lista
+function mockFetch(...bodies: Record<string, unknown>[]) {
+  const fetchMock = vi.fn();
+  for (const body of bodies) {
+    fetchMock.mockResolvedValueOnce({ ok: body.ok, json: async () => body });
+  }
   vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+const done = (data?: object) => ({ ok: true, code: 200, message: "Listo", data });
 
-  expect(await accountsRequest("GET", "/friends")).toEqual(body);
-  expect(fetchMock.mock.calls[0][1].headers).toEqual({});
+beforeEach(() => useAuthStore.setState({ session: testSession, error: null }));
 
-  useAuthStore.setState({ session: { id: 1, dname: "Ana", token: "jwt" } });
+test("con sesión manda el token y siempre credentials: include (para la cookie)", async () => {
+  const fetchMock = mockFetch(done({ friends: [] }));
+  expect(await accountsRequest("GET", "/friends")).toEqual(done({ friends: [] }));
+  const [, options] = fetchMock.mock.calls[0];
+  expect(options.headers).toEqual({ authorization: `Bearer ${testSession.token}` });
+  expect(options.credentials).toBe("include");
+});
+
+test("auth: false no manda token (login, registro, refresh)", async () => {
+  const fetchMock = mockFetch(done());
+  await accountsRequest("POST", "/login", { dname: "Ana" }, { auth: false });
+  expect(fetchMock.mock.calls[0][1].headers.authorization).toBeUndefined();
+});
+
+test("si el token de acceso venció, primero se renueva con /refresh y la petición va con el nuevo", async () => {
+  const expired = `x.${btoa(JSON.stringify({ exp: 1 }))}.firma`;
+  useAuthStore.setState({ session: { ...testSession, token: expired } });
+  const renewed = { ...testSession, token: testSession.token + "2" };
+  const fetchMock = mockFetch(done(renewed), done({ friends: [] }));
+
   await accountsRequest("GET", "/friends");
-  expect(fetchMock.mock.calls[1][1].headers).toEqual({ authorization: "Bearer jwt" });
+  expect(fetchMock.mock.calls[0][0]).toMatch(/\/refresh$/);
+  expect(fetchMock.mock.calls[1][1].headers.authorization).toBe(`Bearer ${renewed.token}`);
+  expect(useAuthStore.getState().session).toEqual(renewed);
 });
 
 test("un error del backend se lanza como ApiError con message, error y code", async () => {
-  const body = { ok: false, code: 401, message: "Tu sesión expiró", error: "SESSION_EXPIRED" };
-  vi.stubGlobal("fetch", async () => ({ ok: false, json: async () => body }));
-
-  const error = await accountsRequest("GET", "/friends").catch((e) => e);
+  mockFetch({ ok: false, code: 409, message: "Ya son amigos", error: "ALREADY_FRIENDS" });
+  const error = await accountsRequest("POST", "/friends/requests").catch((e) => e);
   expect(error).toBeInstanceOf(ApiError);
-  expect(error).toMatchObject({ message: "Tu sesión expiró", error: "SESSION_EXPIRED", code: 401 });
+  expect(error).toMatchObject({ message: "Ya son amigos", error: "ALREADY_FRIENDS", code: 409 });
 });
 
-test("SESSION_EXPIRED cierra la sesión y deja el aviso para el login", async () => {
-  useAuthStore.setState({ session: { id: 1, dname: "Ana", token: "jwt" } });
-  const body = { ok: false, code: 401, message: "x", error: "SESSION_EXPIRED" };
-  vi.stubGlobal("fetch", async () => ({ ok: false, json: async () => body }));
+test("SESSION_EXPIRED con sesión: se cierra y el login lo explica", async () => {
+  mockFetch({ ok: false, code: 401, message: "x", error: "SESSION_EXPIRED" });
   await accountsRequest("GET", "/friends").catch(() => {});
   expect(useAuthStore.getState().session).toBeNull();
   expect(useAuthStore.getState().error).toBe("Tu sesión expiró, vuelve a entrar");

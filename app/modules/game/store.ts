@@ -8,7 +8,7 @@ type GameState = {
   player: RufflePlayerElement | null;
   loading: boolean;
   error: string | null;
-  mount(container: HTMLElement, dname: string, token: string): Promise<void>;
+  mount(container: HTMLElement, dname: string): Promise<void>;
   unmount(): void;
   restart(): void; // lo vuelve a cargar en el mismo lugar (tras una caída del servidor)
 };
@@ -21,12 +21,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   loading: false,
   error: null,
 
-  async mount(container, dname, token) {
+  async mount(container, dname) {
     if (get().player || get().loading) return; // uno solo, aunque React lo pida dos veces
     lastMount = { container, dname };
     set({ loading: true, error: null });
     try {
-      set({ player: await startGame(container, dname, token) });
+      // El SWF entra al servidor de juego con el token: tiene que estar vigente
+      const token = await useAuthStore.getState().freshToken();
+      if (token) set({ player: await startGame(container, dname, token) });
     } catch (e) {
       set({ error: (e as Error).message });
     } finally {
@@ -40,9 +42,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   restart() {
-    const token = useAuthStore.getState().session?.token;
-    if (!lastMount || !token) return;
+    if (!lastMount) return;
     get().unmount();
-    void get().mount(lastMount.container, lastMount.dname, token);
+    void get().mount(lastMount.container, lastMount.dname);
   },
 }));

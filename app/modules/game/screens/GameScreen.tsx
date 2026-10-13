@@ -14,7 +14,7 @@ import { useGameStore } from "../store";
 // desmontaría y volvería a montar el juego cada vez que cambia el estado.
 function gameContainer(container: HTMLDivElement | null) {
   const session = useAuthStore.getState().session;
-  if (container && session) useGameStore.getState().mount(container, session.dname, session.token);
+  if (container && session) useGameStore.getState().mount(container, session.dname);
   return () => useGameStore.getState().unmount();
 }
 

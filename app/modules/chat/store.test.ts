@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { useAuthStore } from "@/modules/auth/store";
+import { testSession } from "@/modules/auth/helpers/test-session";
 import type { ChatMessage, ChatServerEvent } from "./types";
 
 // Conexión simulada: guarda lo que se envía y deja "recibir" eventos del servidor o cortarla
@@ -25,10 +26,13 @@ const hola: ChatMessage = {
   at: "2026-01-01T12:00:00Z",
 };
 
-beforeEach(() => {
+// connect pide antes un token vigente (async): se espera a que abra la conexión
+beforeEach(async () => {
   sent.length = 0;
+  useAuthStore.setState({ session: testSession });
   useChatStore.setState({ messages: [], mod: false, connected: false, notice: null, muting: null });
   close = useChatStore.getState().connect();
+  await new Promise((resolve) => setTimeout(resolve));
 });
 afterEach(() => close());
 
@@ -82,7 +86,7 @@ test("si se cae la conexión deja de estar conectado", () => {
 });
 
 test("si el servidor dice SESSION_EXPIRED, se cierra la sesión", () => {
-  useAuthStore.setState({ session: { id: 1, dname: "Ana", token: "jwt" } });
+  useAuthStore.setState({ session: testSession });
   receive({ type: "error", ok: false, code: 401, message: "x", error: "SESSION_EXPIRED" });
   expect(useAuthStore.getState().session).toBeNull();
 });

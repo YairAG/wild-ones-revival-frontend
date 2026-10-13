@@ -1,5 +1,6 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import { useAuthStore } from "@/modules/auth/store";
+import { testSession } from "@/modules/auth/helpers/test-session";
 import { useModerationStore } from "./store";
 
 const summary = {
@@ -31,7 +32,7 @@ function mockBackend(...responses: [number, object?][]) {
 }
 
 beforeEach(() => {
-  useAuthStore.setState({ session: { id: 1, dname: "Ana", token: "jwt" } });
+  useAuthStore.setState({ session: testSession });
   useModerationStore.setState({ open: false, summary: null, error: null });
 });
 
@@ -42,7 +43,7 @@ test("al abrir carga silenciados y registro con el token de la sesión", async (
   await vi.waitFor(() => expect(useModerationStore.getState().summary).toEqual(summary));
   const [url, options] = fetchMock.mock.calls[0];
   expect(url).toMatch(/\/chat\/moderation$/);
-  expect(options.headers.authorization).toBe("Bearer jwt");
+  expect(options.headers.authorization).toBe(`Bearer ${testSession.token}`);
 });
 
 test("quitar silencio usa DELETE y recarga", async () => {

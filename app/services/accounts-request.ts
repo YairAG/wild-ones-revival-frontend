@@ -1,5 +1,6 @@
-// Petición al backend de cuentas. Si hay sesión, va con su token (el mismo del login). La usan auth, amigos y
-// moderación. Devuelve la respuesta completa ({ ok, code, message, data }); si falla, lanza ApiError.
+// Petición al backend de cuentas. Con sesión, va con un token de acceso vigente (si venció, primero se renueva).
+// Siempre con credentials: "include" para que el navegador mande y guarde la cookie de sesión (httpOnly).
+// Devuelve la respuesta completa ({ ok, code, message, data }); si falla, lanza ApiError.
 import { useAuthStore } from "@/modules/auth/store";
 import type { ApiResponse, Success } from "./types";
 
@@ -16,16 +17,19 @@ export class ApiError extends Error {
   }
 }
 
+// auth: false para las rutas que dan la sesión (login, registro, refresh, logout): no llevan token
 export async function accountsRequest<T = undefined>(
   method: "GET" | "POST" | "DELETE",
   path: string,
   body?: object,
+  { auth = true } = {},
 ): Promise<Success<T>> {
-  const token = useAuthStore.getState().session?.token;
+  const token = auth ? await useAuthStore.getState().freshToken() : null;
   let res: ApiResponse<T>;
   try {
     const response = await fetch(ACCOUNTS_URL + path, {
       method,
+      credentials: "include",
       headers: {
         ...(token ? { authorization: `Bearer ${token}` } : {}),
         ...(body ? { "content-type": "application/json" } : {}),
@@ -37,7 +41,8 @@ export async function accountsRequest<T = undefined>(
     throw new ApiError("No se pudo conectar con el servidor", "NETWORK_ERROR", 0);
   }
   if (!res.ok) {
-    if (res.error === "SESSION_EXPIRED") useAuthStore.getState().expire(); // GameScreen manda al login
+    // Con un token recién renovado, esto es que la sesión ya no existe: GameScreen manda al login
+    if (auth && res.error === "SESSION_EXPIRED") useAuthStore.getState().expire();
     throw new ApiError(res.message, res.error, res.code);
   }
   return res;

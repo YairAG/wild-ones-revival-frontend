@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { useAuthStore } from "@/modules/auth/store";
+import { testSession } from "@/modules/auth/helpers/test-session";
 import { useFriendsStore } from "./store";
 
 const list = {
@@ -24,7 +25,7 @@ function mockBackend(...responses: [number, object?][]) {
 }
 
 beforeEach(() => {
-  useAuthStore.setState({ session: { id: 1, dname: "Ana", token: "jwt" } });
+  useAuthStore.setState({ session: testSession });
   useFriendsStore.setState({
     list: { friends: [], incoming: [], outgoing: [] },
     error: null,
@@ -39,7 +40,7 @@ test("cargar trae la lista con el token de la sesión", async () => {
   expect(useFriendsStore.getState().list).toEqual(list);
   const [url, options] = fetchMock.mock.calls[0];
   expect(url).toMatch(/\/friends$/);
-  expect(options.headers.authorization).toBe("Bearer jwt");
+  expect(options.headers.authorization).toBe(`Bearer ${testSession.token}`);
 });
 
 test("agregar envía el nombre y recarga la lista", async () => {
@@ -84,6 +85,7 @@ test("mientras el panel está en pantalla recarga cada 15 s, y para al quitarlo"
   vi.useFakeTimers();
   const fetchMock = mockBackend([200, list], [200, list], [200, list]);
   const stop = useFriendsStore.getState().startRefreshing();
+  await vi.advanceTimersByTimeAsync(0); // la petición sale tras confirmar que el token está vigente
   expect(fetchMock).toHaveBeenCalledTimes(1); // al montar
   await vi.advanceTimersByTimeAsync(15_000);
   expect(fetchMock).toHaveBeenCalledTimes(2);

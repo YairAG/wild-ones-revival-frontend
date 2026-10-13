@@ -32,8 +32,11 @@ export const useInvitesStore = create<InvitesState>((set, get) => {
     noticeTimer = setTimeout(() => set({ notice: null }), NOTICE_MS);
   }
 
-  function open() {
-    const token = useAuthStore.getState().session?.token ?? "";
+  // Abre la conexión con un token vigente. `active`: si ya se cerró mientras se renovaba el token, no se abre
+  let active = false;
+  async function open() {
+    const token = await useAuthStore.getState().freshToken();
+    if (!token || !active) return;
     connection = openSocialConnection(token, handle, () => reconnector.dropped());
   }
   const reconnector = createReconnector(open, (reconnect) => set({ reconnect }));
@@ -65,8 +68,10 @@ export const useInvitesStore = create<InvitesState>((set, get) => {
     reconnectNow: () => reconnector.retryNow(),
 
     connect() {
-      open();
+      active = true;
+      void open();
       return () => {
+        active = false;
         reconnector.stop();
         set({ reconnect: CONNECTED });
         connection?.close();
