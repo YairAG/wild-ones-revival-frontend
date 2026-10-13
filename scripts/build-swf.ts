@@ -188,6 +188,15 @@ const SCRIPT_PATCHES: Record<string, [RegExp, string][]> = {
         " this.previousPetButton.visible = this.nextPetButton.visible = false;",
     ],
   ],
+  // Poderes de mascota con el código hecho pero sin conectar: scratch (gato) tiene Avatar.processScratch y
+  // dinoquake (dino) lo maneja la clase Earthquake, pero MakeWeapon no los usaba y no hacían nada
+  "com.playdom.ballistics.weapons.MakeWeapon": [
+    [/("earthquake":Earthquake,)/, '$1\n         "dinoquake":Earthquake,'],
+    [
+      /(else if\(classType == "punch"\)\s*\{\s*source\.processPunch\(\);\s*\})/,
+      '$1\n         else if(classType == "scratch")\n         {\n            source.processScratch();\n         }',
+    ],
+  ],
 };
 
 // Fuentes "Chinese Rocks" (la de los menús): solo tiene mayúsculas, así que sus textos van en mayúsculas

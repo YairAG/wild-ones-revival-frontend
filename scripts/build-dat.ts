@@ -47,15 +47,10 @@ for (const [file, fields] of Object.entries(FIELDS)) {
 const levels = JSON.parse(readFileSync(`${ORIGINALS}/Levels.dat`, "utf8"));
 // Los poderes de mascota son armas (petWeapon en WeaponsGrid), y el cliente solo muestra los que tienes. Las
 // del nivel 0 ("weapon") las tienen todos; el original solo traía ahí las de las mascotas que daba por nivel.
-// El cliente ya filtra por la mascota actual. Si su baseType no es un arma del .dat, el cliente descarta el
-// poder y truena al equiparlo (pasa con fishspit, baseType "spit")
-const grid: { type: string; petWeapon?: boolean; baseType?: string }[] = JSON.parse(
-  readFileSync(`${ORIGINALS}/WeaponsGrid.dat`, "utf8"),
-);
-const types = grid.map((weapon) => weapon.type);
-const powers = grid
-  .filter((weapon) => weapon.petWeapon && (!weapon.baseType || types.includes(weapon.baseType)))
-  .map((weapon) => weapon.type);
+// El cliente ya filtra por la mascota actual. Solo los que el SWF sabe usar (revisado en MakeWeapon y Avatar;
+// scratch y dinoquake con el parche de build-swf.ts). Fuera: giant, tongue, flood y superspin (sin código),
+// fishspit (su baseType "spit" no existe: truena al equiparlo) y acornschild (le faltan los dibujos)
+const powers = ["bone", "superjump", "climb", "punch", "dig", "battle", "scratch", "dinoquake"];
 levels[0].weapon = [...new Set([...levels[0].weapon, ...powers])];
 // La tienda solo ofrece las mascotas que Levels.dat desbloquea ("chassis") y las que ya tienes. El original
 // daba 7 por nivel y las demás llegaban por otro lado (no sabemos cómo). Se venden desde el nivel 0 las que
