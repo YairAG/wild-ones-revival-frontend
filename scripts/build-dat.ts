@@ -20,11 +20,6 @@ const FIELDS: Record<string, string[]> = {
   "Other.dat": ["text"],
 };
 
-// TEMPORAL (para probar): todas las mascotas de Pets.dat se desbloquean en el nivel 0. La tienda solo muestra
-// las que Levels.dat desbloquea en algún nivel ("chassis"), y el original solo tenía 7. Se quitará cuando haya
-// eventos de mascota nueva
-const ALL_PETS_AT_LEVEL_0 = true;
-
 const dictionary: Record<string, string> = existsSync(DICTIONARY)
   ? JSON.parse(readFileSync(DICTIONARY, "utf8"))
   : {};
@@ -50,11 +45,6 @@ for (const [file, fields] of Object.entries(FIELDS)) {
 
 // Levels.dat: un objeto por nivel; "chassis" son las mascotas que desbloquea
 const levels = JSON.parse(readFileSync(`${ORIGINALS}/Levels.dat`, "utf8"));
-if (ALL_PETS_AT_LEVEL_0) {
-  const pets: { type: string }[] = JSON.parse(readFileSync(`${ORIGINALS}/Pets.dat`, "utf8"));
-  for (const level of levels) delete level.chassis;
-  levels[0].chassis = pets.map((pet) => pet.type);
-}
 // Los poderes de mascota son armas (petWeapon en WeaponsGrid), y el cliente solo muestra los que tienes. Las
 // del nivel 0 ("weapon") las tienen todos; el original solo traía ahí las de las mascotas que daba por nivel.
 // El cliente ya filtra por la mascota actual.
@@ -63,6 +53,17 @@ const grid: { type: string; petWeapon?: boolean }[] = JSON.parse(
 );
 const powers = grid.filter((weapon) => weapon.petWeapon).map((weapon) => weapon.type);
 levels[0].weapon = [...new Set([...levels[0].weapon, ...powers])];
+// La tienda solo ofrece las mascotas que Levels.dat desbloquea ("chassis") y las que ya tienes. El original
+// daba 7 por nivel y las demás llegaban por otro lado (no sabemos cómo). Se venden desde el nivel 0 las que
+// tienen un poder que el SWF sabe usar; las que no tienen poder (o es uno que el SWF no trae) se quedan fuera
+const pets: { type: string; petPower: string }[] = JSON.parse(
+  readFileSync(`${ORIGINALS}/Pets.dat`, "utf8"),
+);
+const byLevel = levels.flatMap((level: { chassis?: string[] }) => level.chassis ?? []);
+const withPower = pets.filter(
+  (pet) => powers.includes(pet.petPower) && !byLevel.includes(pet.type),
+);
+levels[0].chassis = [...(levels[0].chassis ?? []), ...withPower.map((pet) => pet.type)];
 writeFileSync(`${OUTPUT}/Levels.dat`, JSON.stringify(levels, null, "\t"));
 
 mkdirSync("public/game/translations", { recursive: true });

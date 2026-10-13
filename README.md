@@ -40,8 +40,10 @@ Lee los originales de `public/game/original-json/` (copia de los `.dat` sin toca
 `public/game/translations/es.json` y escribe en `public/game/assets/json/`. El diccionario es local como todo
 `public/game/` (tiene los textos originales); los textos nuevos se agregan vacíos para traducirlos.
 
-Ajuste temporal: con `ALL_PETS_AT_LEVEL_0` las 30 mascotas de `Pets.dat` se desbloquean en el nivel 0 (el
-original solo desbloqueaba 7 por nivel en `Levels.dat`).
+Mascotas: el original desbloqueaba 7 por nivel en `Levels.dat` ("chassis"). Además, se venden desde el nivel 0
+las que tienen un poder que el SWF sabe usar (`petWeapon` en `WeaponsGrid.dat`), y esos poderes pasan a ser
+armas por defecto (el cliente solo muestra el de la mascota actual). Las que no tienen poder no salen en la
+tienda.
 
 El resto de los textos (menús, botones, tutorial) están dentro del SWF. Se arma un `publicV1.swf` en español con:
 
