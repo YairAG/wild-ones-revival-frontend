@@ -104,6 +104,13 @@
     outline: 2px solid var(--color-foco);
     outline-offset: 2px;
   }
+  /* Todo lo que se puede pulsar muestra la manita (Tailwind 4 deja los botones con el cursor normal):
+     botones de texto como los nombres del chat, y las opciones con radio o casilla */
+  button:not(:disabled),
+  [role="button"],
+  label:has(> input[type="radio"], > input[type="checkbox"]) {
+    cursor: pointer;
+  }
 }
 
 @layer components {
