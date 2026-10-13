@@ -5,7 +5,7 @@ juego** (SWF) con [Ruffle](https://ruffle.rs), conectado a nuestros servidores.
 
 Habla con dos servidores:
 
-- [wildones-accounts](https://github.com/YairAG/wildones-accounts): registro y login (HTTP). Devuelve un JWT.
+- [wild-ones-revival-accounts](https://github.com/YairAG/wild-ones-revival-accounts): registro y login (HTTP). Devuelve un JWT.
 - [Wild-Ones-Revival](https://github.com/YairAG/Wild-Ones-Revival): el servidor de juego (WebSocket). El SWF
   entra con ese JWT.
 
