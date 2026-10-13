@@ -30,14 +30,12 @@ export const useInvitesStore = create<InvitesState>((set, get) => {
     switch (message.command) {
       case "invite":
         return set({ incoming: message.from });
+      // El texto del aviso lo manda el servidor
       case "invite_sent":
-        return notify(`Invitación enviada a ${message.to.dname}`);
       case "invite_accepted":
-        return notify(`${message.by.dname} aceptó: entrando a la sala`);
       case "invite_declined":
-        return notify(`${message.by.dname} no puede jugar ahora`);
-      case "invite_error":
-        return notify(message.error);
+      case "error":
+        return notify(message.message);
     }
   }
 

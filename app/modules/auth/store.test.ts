@@ -14,21 +14,36 @@ beforeEach(() =>
 );
 
 test("entrar guarda la sesión", async () => {
-  mockBackend(200, { id: 1, dname: "Ana", token: "jwt" });
+  mockBackend(200, {
+    ok: true,
+    code: 200,
+    message: "Sesión iniciada",
+    data: { id: 1, dname: "Ana", token: "jwt" },
+  });
   expect(await useAuthStore.getState().submit("Ana", "clave-segura")).toBe(true);
   expect(useAuthStore.getState().session).toEqual({ id: 1, dname: "Ana", token: "jwt" });
   expect(vi.mocked(fetch).mock.calls[0][0]).toMatch(/\/login$/);
 });
 
 test("en modo registro llama a /register", async () => {
-  mockBackend(201, { id: 2, dname: "Beto", token: "jwt" });
+  mockBackend(201, {
+    ok: true,
+    code: 201,
+    message: "Cuenta creada",
+    data: { id: 2, dname: "Beto", token: "jwt" },
+  });
   useAuthStore.getState().toggleMode();
   await useAuthStore.getState().submit("Beto", "clave-segura");
   expect(vi.mocked(fetch).mock.calls[0][0]).toMatch(/\/register$/);
 });
 
 test("un error del backend se muestra y no hay sesión", async () => {
-  mockBackend(401, { error: "Nombre o contraseña incorrectos" });
+  mockBackend(401, {
+    ok: false,
+    code: 401,
+    message: "Nombre o contraseña incorrectos",
+    error: "WRONG_CREDENTIALS",
+  });
   expect(await useAuthStore.getState().submit("Ana", "mala-clave")).toBe(false);
   expect(useAuthStore.getState().error).toBe("Nombre o contraseña incorrectos");
   expect(useAuthStore.getState().session).toBeNull();

@@ -8,11 +8,16 @@ const list = {
   outgoing: [],
 };
 
-// Backend de cuentas simulado: cada llamada responde con la siguiente respuesta de la lista
-function mockBackend(...responses: [number, object | null][]) {
+// Backend de cuentas simulado: cada llamada responde con la siguiente de la lista, con el formato del backend.
+// Bien: [código, data?]. Error: [código, { message, error }]
+function mockBackend(...responses: [number, object?][]) {
   const fetchMock = vi.fn();
-  for (const [status, body] of responses) {
-    fetchMock.mockResolvedValueOnce({ ok: status < 400, status, json: async () => body });
+  for (const [code, payload] of responses) {
+    const body =
+      code < 400
+        ? { ok: true, code, message: "Listo", data: payload }
+        : { ok: false, code, ...payload };
+    fetchMock.mockResolvedValueOnce({ ok: code < 400, status: code, json: async () => body });
   }
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
@@ -46,14 +51,17 @@ test("agregar envía el nombre y recarga la lista", async () => {
 });
 
 test("un error del backend se muestra y no recarga", async () => {
-  const fetchMock = mockBackend([404, { error: "No existe un jugador con ese nombre" }]);
+  const fetchMock = mockBackend([
+    404,
+    { message: "No existe un jugador con ese nombre", error: "PLAYER_NOT_FOUND" },
+  ]);
   expect(await useFriendsStore.getState().send("Nadie")).toBe(false);
   expect(useFriendsStore.getState().error).toBe("No existe un jugador con ese nombre");
   expect(fetchMock).toHaveBeenCalledTimes(1);
 });
 
-test("rechazar usa DELETE (responde 204, sin cuerpo)", async () => {
-  const fetchMock = mockBackend([204, null], [200, list]);
+test("rechazar usa DELETE", async () => {
+  const fetchMock = mockBackend([200], [200, list]);
   await useFriendsStore.getState().dismiss(3);
   expect(fetchMock.mock.calls[0][0]).toMatch(/\/friends\/requests\/3$/);
   expect(fetchMock.mock.calls[0][1].method).toBe("DELETE");
@@ -61,7 +69,7 @@ test("rechazar usa DELETE (responde 204, sin cuerpo)", async () => {
 });
 
 test("quitar un amigo pide confirmación antes de borrarlo", async () => {
-  const fetchMock = mockBackend([204, null], [200, list]);
+  const fetchMock = mockBackend([200], [200, list]);
   useFriendsStore.getState().askRemove(2);
   expect(useFriendsStore.getState().confirmingRemove).toBe(2);
   expect(fetchMock).not.toHaveBeenCalled(); // pedir confirmación no borra nada

@@ -15,11 +15,16 @@ const summary = {
   ],
 };
 
-// Backend de cuentas simulado: cada llamada responde con la siguiente respuesta de la lista
-function mockBackend(...responses: [number, object | null][]) {
+// Backend de cuentas simulado: cada llamada responde con la siguiente de la lista, con el formato del backend.
+// Bien: [código, data?]. Error: [código, { message, error }]
+function mockBackend(...responses: [number, object?][]) {
   const fetchMock = vi.fn();
-  for (const [status, body] of responses) {
-    fetchMock.mockResolvedValueOnce({ ok: status < 400, status, json: async () => body });
+  for (const [code, payload] of responses) {
+    const body =
+      code < 400
+        ? { ok: true, code, message: "Listo", data: payload }
+        : { ok: false, code, ...payload };
+    fetchMock.mockResolvedValueOnce({ ok: code < 400, status: code, json: async () => body });
   }
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
@@ -41,7 +46,7 @@ test("al abrir carga silenciados y registro con el token de la sesión", async (
 });
 
 test("quitar silencio usa DELETE y recarga", async () => {
-  const fetchMock = mockBackend([204, null], [200, { ...summary, muted: [] }]);
+  const fetchMock = mockBackend([200], [200, { ...summary, muted: [] }]);
   await useModerationStore.getState().unmute(2);
   expect(fetchMock.mock.calls[0][0]).toMatch(/\/chat\/mutes\/2$/);
   expect(fetchMock.mock.calls[0][1].method).toBe("DELETE");
@@ -49,7 +54,7 @@ test("quitar silencio usa DELETE y recarga", async () => {
 });
 
 test("si no eres moderador se muestra el error del backend", async () => {
-  mockBackend([403, { error: "Solo los moderadores pueden hacer eso" }]);
+  mockBackend([403, { message: "Solo los moderadores pueden hacer eso", error: "NOT_MOD" }]);
   await useModerationStore.getState().load();
   expect(useModerationStore.getState().error).toBe("Solo los moderadores pueden hacer eso");
 });

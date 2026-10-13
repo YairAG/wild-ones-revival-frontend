@@ -49,9 +49,8 @@ export const useChatStore = create<ChatState>((set, get) => {
       case "deleted":
         return set({ messages: get().messages.filter((m) => m.id !== event.id) });
       case "notice":
-        return notify(event.text);
       case "error":
-        return notify(event.error);
+        return notify(event.message);
     }
   }
 

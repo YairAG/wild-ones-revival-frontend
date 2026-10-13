@@ -1,4 +1,5 @@
 // Mensajes del chat global (WebSocket /chat del backend de cuentas, ver README de wildones-accounts).
+import type { Failure, Success } from "@/services/types";
 
 /** Un mensaje del chat global */
 export type ChatMessage = {
@@ -15,5 +16,5 @@ export type ChatServerEvent =
   | { type: "history"; messages: ChatMessage[]; mod: boolean } // al entrar
   | { type: "message"; message: ChatMessage }
   | { type: "deleted"; id: string } // un moderador lo borró
-  | { type: "notice"; text: string }
-  | { type: "error"; error: string };
+  | ({ type: "notice" } & Success) // aviso solo para ti, con el formato de todas las respuestas
+  | ({ type: "error" } & Failure);

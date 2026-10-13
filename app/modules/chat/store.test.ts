@@ -61,7 +61,13 @@ test("enviar, borrar y silenciar mandan el comando al servidor", () => {
 
 test("los errores del servidor se muestran y se quitan solos a los 5 s", () => {
   vi.useFakeTimers();
-  receive({ type: "error", error: "Espera un momento antes de mandar otro mensaje" });
+  receive({
+    type: "error",
+    ok: false,
+    code: 429,
+    message: "Espera un momento antes de mandar otro mensaje",
+    error: "TOO_FAST",
+  });
   expect(useChatStore.getState().notice).toBe("Espera un momento antes de mandar otro mensaje");
   vi.advanceTimersByTime(5_000);
   expect(useChatStore.getState().notice).toBeNull();

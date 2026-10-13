@@ -3,7 +3,7 @@ import { accountsRequest as request } from "@/services/accounts-request";
 import type { FriendsList } from "../types";
 
 export const friendsApi = {
-  list: () => request<FriendsList>("GET", "/friends"),
+  list: async () => (await request<FriendsList>("GET", "/friends")).data!,
   send: (dname: string) => request("POST", "/friends/requests", { dname }),
   accept: (id: number) => request("POST", `/friends/requests/${id}/accept`),
   // Rechazar una que te enviaron o cancelar una que enviaste
