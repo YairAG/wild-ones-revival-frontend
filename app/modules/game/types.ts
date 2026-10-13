@@ -12,10 +12,11 @@ export type RuffleConfig = {
   autoplay?: "auto" | "on" | "off";
   unmuteOverlay?: "visible" | "hidden";
   letterbox?: "fullscreen" | "off" | "on";
+  quality?: "low" | "medium" | "high";
 };
 
 export type RufflePlayerElement = HTMLElement & {
-  ruffle(): { load(config: RuffleConfig): Promise<void> };
+  ruffle(): { load(config: RuffleConfig): Promise<void>; volume: number }; // volume: 0 a 1
 };
 
 declare global {

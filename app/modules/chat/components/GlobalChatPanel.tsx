@@ -5,6 +5,7 @@ import { Panel } from "@/components/Panel";
 import { useAuthStore } from "@/modules/auth/store";
 import { useFriendsStore } from "@/modules/friends/store";
 import { useProfileStore } from "@/modules/profile/store";
+import { useSettingsStore } from "@/modules/settings/store";
 import { ModerationDialog } from "@/modules/moderation/components/ModerationDialog";
 import { useModerationStore } from "@/modules/moderation/store";
 import { useChatStore } from "../store";
@@ -41,6 +42,7 @@ export function GlobalChatPanel() {
   const { messages, mod, connected, reconnect, reconnectNow, notice, remove, askMute } =
     useChatStore();
   const myId = useAuthStore((s) => s.session?.id);
+  const showTime = useSettingsStore((s) => s.preferences.showChatTime);
   // Los mensajes de quien bloqueaste no se muestran
   const blocked = useFriendsStore((s) => s.list.blocked);
   const visible = messages.filter((m) => !blocked.some((b) => b.id === m.userId));
@@ -124,7 +126,7 @@ export function GlobalChatPanel() {
                     {message.dname}
                   </button>
                 )}
-                <span className="chat-hora mr-0">{time(message.at)}</span>
+                {showTime && <span className="chat-hora mr-0">{time(message.at)}</span>}
               </p>
               {/* Si el filtro tapó algo, el moderador ve el original al pasar el mouse */}
               {message.original ? (

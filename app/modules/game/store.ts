@@ -1,6 +1,7 @@
 // Estado del juego: el reproductor de Ruffle montado en la página, el modo enfoque y la pantalla completa.
 import { create } from "zustand";
 import { useAuthStore } from "@/modules/auth/store";
+import { useSettingsStore } from "@/modules/settings/store";
 import { startGame } from "./services/ruffle";
 import type { RufflePlayerElement } from "./types";
 
@@ -41,7 +42,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     try {
       // El SWF entra al servidor de juego con el token: tiene que estar vigente
       const token = await useAuthStore.getState().freshToken();
-      if (token) set({ player: await startGame(container, dname, token) });
+      const { quality } = useSettingsStore.getState().preferences;
+      if (token) set({ player: await startGame(container, dname, token, quality) });
+      applyVolume();
     } catch (e) {
       set({ error: (e as Error).message });
     } finally {
@@ -75,3 +78,20 @@ export const useGameStore = create<GameState>((set, get) => ({
   // (el navegador puede negarlo, p. ej. dentro de un iframe: entonces no pasa nada)
   fullscreen: () => void lastMount?.container.parentElement?.requestFullscreen().catch(() => {}),
 }));
+
+// Volumen de los ajustes; en 0 si la pestaña está oculta y está activado "Silenciar en segundo plano"
+function applyVolume() {
+  const player = useGameStore.getState().player;
+  if (!player) return;
+  const { volume, muteInBackground } = useSettingsStore.getState().preferences;
+  player.ruffle().volume = muteInBackground && document.hidden ? 0 : volume / 100;
+}
+globalThis.document?.addEventListener("visibilitychange", applyVolume); // (en los tests no hay document)
+
+// Al cambiar los ajustes: el volumen se aplica al momento; la calidad solo al cargar, así que se recarga el juego
+useSettingsStore.subscribe((settings, before) => {
+  if (settings.preferences === before.preferences) return;
+  if (settings.preferences.quality !== before.preferences.quality)
+    useGameStore.getState().restart();
+  else applyVolume();
+});

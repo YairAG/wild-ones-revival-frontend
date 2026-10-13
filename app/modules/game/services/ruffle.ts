@@ -1,5 +1,6 @@
 // Carga el cliente original (SWF) con Ruffle y lo conecta a nuestros servidores.
 // Los archivos originales están en public/game/ (no van a git: ver README).
+import type { Quality } from "@/modules/settings/types";
 import type { RuffleConfig, RufflePlayerElement } from "../types";
 
 const RUFFLE_SCRIPT = "https://unpkg.com/@ruffle-rs/ruffle@0.7.1/ruffle.js";
@@ -38,7 +39,7 @@ function loadRuffleScript(): Promise<void> {
 }
 
 /** Configuración para el SWF: login con el token y redirecciones a nuestros servidores */
-export function gameConfig(dname: string, token: string): RuffleConfig {
+export function gameConfig(dname: string, token: string, quality: Quality = "high"): RuffleConfig {
   const origin = window.location.origin;
   return {
     url: `${origin}/game/publicV1.swf`,
@@ -64,6 +65,7 @@ export function gameConfig(dname: string, token: string): RuffleConfig {
     autoplay: "on",
     unmuteOverlay: "hidden",
     letterbox: "on",
+    quality, // de los ajustes
   };
 }
 
@@ -72,12 +74,13 @@ export async function startGame(
   container: HTMLElement,
   dname: string,
   token: string,
+  quality: Quality,
 ): Promise<RufflePlayerElement> {
   await loadRuffleScript();
   const player = window.RufflePlayer!.newest().createPlayer();
   player.style.width = "100%";
   player.style.height = "100%";
   container.appendChild(player);
-  await player.ruffle().load(gameConfig(dname, token));
+  await player.ruffle().load(gameConfig(dname, token, quality));
   return player;
 }
