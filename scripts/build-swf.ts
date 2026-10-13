@@ -439,11 +439,13 @@ const dictionary: Record<string, string> = existsSync(DICTIONARY)
   ? JSON.parse(readFileSync(DICTIONARY, "utf8"))
   : {};
 
-// Posición x (en twips) de cada renglón, para textos que en español quedan descentrados: id del texto → x por
-// renglón (null deja el original). 1482/1483: "VER" / "MAS" del botón del baúl (eran "SEE" / "MORE")
-const TEXT_X: Record<string, (number | null)[]> = {
-  1482: [405, 405],
-  1483: [405, 405],
+// Ajustes de textos que en español no caben o quedan descentrados, por id del texto: `x` es la posición (en twips)
+// de cada renglón (null deja la original) y `height` el tamaño de la letra (en twips)
+const TEXT_FIX: Record<string, { x?: (number | null)[]; height?: number }> = {
+  1482: { x: [378, 378] }, // "VER" / "MAS" del botón del baúl (eran "SEE" / "MORE")
+  1483: { x: [378, 378] },
+  2120: { height: 400 }, // "EDITAR" del baúl (era "EDIT", de 480)
+  2121: { height: 400 },
 };
 
 for (const file of readdirSync(`${WORK}/texts`)) {
@@ -471,11 +473,13 @@ for (const file of readdirSync(`${WORK}/texts`)) {
         .map((line) => line.replace(/^letterspacing .*/, "letterspacing 0"))
         .join(newline);
     }
-    const x = TEXT_X[file.replace(".txt", "")]?.[(i - 1) / 2];
-    if (x != null) {
-      changed = true;
-      format = format.replace(/^x -?\d+/m, `x ${x}`);
-    }
+    // El primer bloque son los límites del texto; los renglones empiezan en i = 3
+    const fix = TEXT_FIX[file.replace(".txt", "")];
+    const x = i >= 3 ? fix?.x?.[(i - 3) / 2] : null;
+    if (x != null) format = format.replace(/^x -?\d+/m, `x ${x}`);
+    if (fix?.height && /^height /m.test(format))
+      format = format.replace(/^height \d+/m, `height ${fix.height}`);
+    if (x != null || fix?.height) changed = true;
     result += `[${format}]${escape(translated)}`;
   }
   if (changed) writeFileSync(`${WORK}/import/texts/${file}`, result, "utf8");
