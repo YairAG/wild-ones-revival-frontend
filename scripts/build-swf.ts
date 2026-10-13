@@ -223,6 +223,21 @@ const SCRIPT_PATCHES: Record<string, [RegExp, string][]> = {
   "com.playdom.ballistics.weapons.Earthquake": [
     [/Sounds\.playDinoquake\(\)/g, 'Sounds.playSound("dinoquake.mp3")'],
   ],
+  // "Turno de X": el original armaba nombre + "'s turn" (o "' turn" si terminaba en s); en español el nombre va al
+  // final, así que no basta con traducir la cadena
+  Battlefield: [
+    [
+      /turnString \+= "\\'s? turn";/g,
+      'turnString = "Turno de " + playOrder.currentAvatar.player.displayName;',
+    ],
+  ],
+  // Pantalla final: el botón "avisar a mis amigos" publicaba en Facebook (ExternalCalls.viral); se esconde
+  "com.playdom.ballistics.gamesummary.GameSummaryView": [
+    [
+      /(okButton\.addEventListener\(MouseEvent\.MOUSE_DOWN,\s*onOk,\s*false,\s*0,\s*true\);)/,
+      "$1 okButton.visible = false;",
+    ],
+  ],
   "com.playdom.ballistics.weapons.MakeWeapon": [
     [/("earthquake":Earthquake,)/, '$1\n         "dinoquake":Earthquake,'],
     [
