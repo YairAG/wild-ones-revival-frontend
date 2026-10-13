@@ -3,6 +3,8 @@
 import type { FormEvent } from "react";
 import { Panel } from "@/components/Panel";
 import { useAuthStore } from "@/modules/auth/store";
+import { ModerationDialog } from "@/modules/moderation/components/ModerationDialog";
+import { useModerationStore } from "@/modules/moderation/store";
 import { useChatStore } from "../store";
 import { MuteDialog } from "./MuteDialog";
 
@@ -40,6 +42,16 @@ export function GlobalChatPanel() {
   return (
     <Panel
       title="Chat global"
+      badge={
+        mod && (
+          <button
+            onClick={() => useModerationStore.getState().show()}
+            className="text-ayuda font-extrabold text-moderacion"
+          >
+            Moderación
+          </button>
+        )
+      }
       footer={
         <form onSubmit={sendMessage} className="flex w-full gap-2">
           <label htmlFor="chat-mensaje" className="sr-only">
@@ -121,6 +133,7 @@ export function GlobalChatPanel() {
           </p>
         )}
         <MuteDialog />
+        <ModerationDialog />
       </div>
     </Panel>
   );
