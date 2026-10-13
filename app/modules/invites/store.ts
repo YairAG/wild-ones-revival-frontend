@@ -2,6 +2,9 @@
 import { create } from "zustand";
 import { useAuthStore } from "@/modules/auth/store";
 import type { PlayerRef } from "@/modules/friends/types";
+import { useGameStore } from "@/modules/game/store";
+import { CONNECTED, createReconnector } from "@/services/reconnect";
+import type { ReconnectState } from "@/services/types";
 import { openSocialConnection } from "./services/social-connection";
 import type { SocialServerMessage } from "./types";
 
@@ -10,6 +13,9 @@ const NOTICE_MS = 5_000;
 type InvitesState = {
   incoming: PlayerRef | null; // quien te invitó (pendiente de responder)
   notice: string | null; // "Invitación enviada a Beto", errores...
+  // Si se cae esta conexión es que se cayó el servidor de juego: se reintenta y el juego muestra el aviso
+  reconnect: ReconnectState;
+  reconnectNow(): void;
   connect(): () => void; // abre la conexión; devuelve la función que la cierra
   invite(friendId: number): void;
   answer(accept: boolean): void;
@@ -26,8 +32,18 @@ export const useInvitesStore = create<InvitesState>((set, get) => {
     noticeTimer = setTimeout(() => set({ notice: null }), NOTICE_MS);
   }
 
+  function open() {
+    const token = useAuthStore.getState().session?.token ?? "";
+    connection = openSocialConnection(token, handle, () => reconnector.dropped());
+  }
+  const reconnector = createReconnector(open, (reconnect) => set({ reconnect }));
+
   function handle(message: SocialServerMessage) {
     switch (message.command) {
+      case "social_ready":
+        // Volvió después de una caída: el SWF también perdió su conexión, así que se vuelve a cargar
+        if (get().reconnect.lost) useGameStore.getState().restart();
+        return reconnector.restored();
       case "invite":
         return set({ incoming: message.from });
       // El texto del aviso lo manda el servidor
@@ -45,10 +61,14 @@ export const useInvitesStore = create<InvitesState>((set, get) => {
     incoming: null,
     notice: null,
 
+    reconnect: CONNECTED,
+    reconnectNow: () => reconnector.retryNow(),
+
     connect() {
-      const token = useAuthStore.getState().session?.token ?? "";
-      connection = openSocialConnection(token, handle);
+      open();
       return () => {
+        reconnector.stop();
+        set({ reconnect: CONNECTED });
         connection?.close();
         connection = null;
       };

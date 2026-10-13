@@ -22,20 +22,25 @@ export function readMessages(data: string): SocialServerMessage[] {
   return messages;
 }
 
-/** Abre la conexión y entra con el token. Devuelve cómo enviar mensajes y cómo cerrarla */
+/** Abre la conexión y entra con el token. onClose avisa si se cierra sola. Devuelve cómo enviar y cerrar */
 export function openSocialConnection(
   token: string,
   onMessage: (message: SocialServerMessage) => void,
+  onClose: () => void,
 ) {
   const ws = new WebSocket(GAME_URL);
   ws.onopen = () =>
     ws.send("POST /ballistic/social?x HTTP/1.1\r\n\r\n" + frame({ command: "logIn", token }));
   ws.onmessage = (event) => readMessages(String(event.data)).forEach(onMessage);
+  ws.onclose = onClose;
 
   return {
     send(message: object) {
       if (ws.readyState === WebSocket.OPEN) ws.send(frame(message));
     },
-    close: () => ws.close(),
+    close() {
+      ws.onclose = null; // cerrarla a propósito no es una desconexión
+      ws.close();
+    },
   };
 }

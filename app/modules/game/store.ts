@@ -1,5 +1,6 @@
 // Estado del juego: el reproductor de Ruffle montado en la página.
 import { create } from "zustand";
+import { useAuthStore } from "@/modules/auth/store";
 import { startGame } from "./services/ruffle";
 import type { RufflePlayerElement } from "./types";
 
@@ -9,7 +10,11 @@ type GameState = {
   error: string | null;
   mount(container: HTMLElement, dname: string, token: string): Promise<void>;
   unmount(): void;
+  restart(): void; // lo vuelve a cargar en el mismo lugar (tras una caída del servidor)
 };
+
+// Con qué se montó la última vez, para restart()
+let lastMount: { container: HTMLElement; dname: string } | null = null;
 
 export const useGameStore = create<GameState>((set, get) => ({
   player: null,
@@ -18,6 +23,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   async mount(container, dname, token) {
     if (get().player || get().loading) return; // uno solo, aunque React lo pida dos veces
+    lastMount = { container, dname };
     set({ loading: true, error: null });
     try {
       set({ player: await startGame(container, dname, token) });
@@ -31,5 +37,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   unmount() {
     get().player?.remove();
     set({ player: null });
+  },
+
+  restart() {
+    const token = useAuthStore.getState().session?.token;
+    if (!lastMount || !token) return;
+    get().unmount();
+    void get().mount(lastMount.container, lastMount.dname, token);
   },
 }));

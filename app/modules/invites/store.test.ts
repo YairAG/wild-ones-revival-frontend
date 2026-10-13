@@ -5,15 +5,24 @@ import type { SocialServerMessage } from "./types";
 // Conexión simulada: guarda lo que se envía y deja "recibir" mensajes del servidor
 const sent: object[] = [];
 let receive: (message: SocialServerMessage) => void = () => {};
+let drop: () => void = () => {};
+let opened = 0; // cuántas veces se abrió la conexión
 vi.mock("./services/social-connection", async (original) => ({
   ...(await original<typeof import("./services/social-connection")>()),
-  openSocialConnection: (_token: string, onMessage: (m: SocialServerMessage) => void) => {
+  openSocialConnection: (
+    _token: string,
+    onMessage: (m: SocialServerMessage) => void,
+    onClose: () => void,
+  ) => {
+    opened++;
     receive = onMessage;
+    drop = onClose;
     return { send: (m: object) => sent.push(m), close: () => {} };
   },
 }));
 
 const { useInvitesStore } = await import("./store");
+const { useGameStore } = await import("@/modules/game/store");
 const ok = (message: string) => ({ ok: true as const, code: 200, message });
 let close: () => void;
 
@@ -62,5 +71,20 @@ test("los avisos para quien invita se quitan solos a los 5 s", () => {
   expect(useInvitesStore.getState().notice).toBe("Beto no puede jugar ahora");
   vi.advanceTimersByTime(5_000);
   expect(useInvitesStore.getState().notice).toBeNull();
+  vi.useRealTimers();
+});
+
+test("si se cae la conexión reintenta a los 5 s; al volver, recarga el juego", () => {
+  vi.useFakeTimers();
+  const restart = vi.spyOn(useGameStore.getState(), "restart").mockImplementation(() => {});
+  const before = opened;
+  drop();
+  expect(useInvitesStore.getState().reconnect).toMatchObject({ lost: true, secondsLeft: 5 });
+  vi.advanceTimersByTime(5_000);
+  expect(opened).toBe(before + 1);
+
+  receive({ command: "social_ready", ...ok("Conectado") });
+  expect(useInvitesStore.getState().reconnect.lost).toBe(false);
+  expect(restart).toHaveBeenCalledTimes(1);
   vi.useRealTimers();
 });

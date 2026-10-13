@@ -6,3 +6,11 @@
 export type Success<T = undefined> = { ok: true; code: number; message: string; data?: T };
 export type Failure = { ok: false; code: number; message: string; error: string };
 export type ApiResponse<T> = Success<T> | Failure;
+
+/** Estado de una conexión que se reintenta sola (ver reconnect.ts) */
+export type ReconnectState = {
+  lost: boolean; // se cayó y todavía no vuelve
+  attempt: number; // intentos hechos desde que se cayó
+  secondsLeft: number; // para el siguiente intento; 0 = intentando ahora
+  failed: boolean; // se acabaron los intentos: hay que reintentar a mano
+};

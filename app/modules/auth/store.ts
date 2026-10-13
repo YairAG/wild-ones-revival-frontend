@@ -41,7 +41,8 @@ export const useAuthStore = create<AuthState>()(
 
       // Al salir, el formulario vuelve a "entrar"
       logout: () => set({ session: null, mode: "login", error: null }),
-      expire: () => set({ session: null, mode: "login", error: "Tu sesión expiró, vuelve a entrar" }),
+      expire: () =>
+        set({ session: null, mode: "login", error: "Tu sesión expiró, vuelve a entrar" }),
     }),
     // Clave en localStorage; solo se guarda la sesión (no el modo ni los errores)
     { name: "wildones-session", partialize: (s) => ({ session: s.session }) },

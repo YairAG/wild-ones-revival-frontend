@@ -6,6 +6,7 @@ import { ChangelogPanel } from "@/modules/changelog/components/ChangelogPanel";
 import { GlobalChatPanel } from "@/modules/chat/components/GlobalChatPanel";
 import { FriendsPanel } from "@/modules/friends/components/FriendsPanel";
 import { InviteToast } from "@/modules/invites/components/InviteToast";
+import { ConnectionLost } from "../components/ConnectionLost";
 import { useGameStore } from "../store";
 
 // Ref de callback: React la llama cuando el div aparece y la función que devuelve cuando se va.
@@ -54,11 +55,11 @@ export function GameScreen() {
         </aside>
         {/* El escenario del SWF mide 760 x 555 (recortado en scripts/build-swf.ts): el reproductor tiene esa
             proporción. Usa todo el ancho, pero sin pasar del alto de la ventana (menos el encabezado y márgenes);
-            en xl además deja 18rem a cada panel */}
-        <div
-          ref={gameContainer}
-          className="order-first mx-auto aspect-[760/555] w-[min(100%,calc((100svh_-_7rem)*760/555))] marco-juego overflow-hidden md:col-span-2 xl:order-none xl:mx-0 xl:w-[min(calc(100%_-_38rem),calc((100svh_-_7rem)*760/555))] xl:shrink-0 xl:self-center"
-        />
+            en xl además deja 18rem a cada panel. Adentro, Ruffle y encima el aviso de conexión perdida */}
+        <div className="relative order-first mx-auto aspect-[760/555] w-[min(100%,calc((100svh_-_7rem)*760/555))] marco-juego overflow-hidden md:col-span-2 xl:order-none xl:mx-0 xl:w-[min(calc(100%_-_38rem),calc((100svh_-_7rem)*760/555))] xl:shrink-0 xl:self-center">
+          <div ref={gameContainer} className="size-full" />
+          <ConnectionLost />
+        </div>
         <aside className="flex h-[32rem] min-w-0 flex-col xl:h-auto xl:flex-1">
           <GlobalChatPanel />
         </aside>

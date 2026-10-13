@@ -36,7 +36,8 @@ const time = (iso: string) =>
   });
 
 export function GlobalChatPanel() {
-  const { messages, mod, connected, notice, remove, askMute } = useChatStore();
+  const { messages, mod, connected, reconnect, reconnectNow, notice, remove, askMute } =
+    useChatStore();
   const myId = useAuthStore((s) => s.session?.id);
 
   return (
@@ -77,6 +78,23 @@ export function GlobalChatPanel() {
       }
     >
       <div ref={connectWhileVisible} className="text-etiqueta flex flex-col gap-1.5 leading-snug">
+        {/* Se cayó la conexión: se reintenta sola; si se rinde, a mano */}
+        {reconnect.lost && (
+          <p role="status" className="ayuda font-bold">
+            {reconnect.failed ? (
+              <>
+                No se pudo conectar con el chat.{" "}
+                <button onClick={reconnectNow} className="text-enlace hover:text-enlace-hover">
+                  Reintentar
+                </button>
+              </>
+            ) : reconnect.secondsLeft > 0 ? (
+              `Sin conexión con el chat. Reintentando en ${reconnect.secondsLeft} s`
+            ) : (
+              "Reconectando..."
+            )}
+          </p>
+        )}
         {connected && messages.length === 0 && (
           <p className="ayuda">Nadie ha escrito todavía. ¡Saluda!</p>
         )}

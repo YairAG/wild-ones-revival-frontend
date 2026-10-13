@@ -2,6 +2,8 @@
 import { create } from "zustand";
 import { useAuthStore } from "@/modules/auth/store";
 import type { PlayerRef } from "@/modules/friends/types";
+import { CONNECTED, createReconnector } from "@/services/reconnect";
+import type { ReconnectState } from "@/services/types";
 import { openChatConnection } from "./services/chat-connection";
 import type { ChatMessage, ChatServerEvent } from "./types";
 
@@ -19,6 +21,8 @@ type ChatState = {
   messages: ChatMessage[];
   mod: boolean; // puede borrar mensajes y silenciar
   connected: boolean;
+  reconnect: ReconnectState; // si se cayó: cuenta regresiva para el siguiente intento
+  reconnectNow(): void;
   notice: string | null; // errores del servidor ("Espera un momento...") y avisos
   connect(): () => void; // abre la conexión; devuelve la función que la cierra
   send(text: string): void;
@@ -40,9 +44,20 @@ export const useChatStore = create<ChatState>((set, get) => {
     noticeTimer = setTimeout(() => set({ notice: null }), NOTICE_MS);
   }
 
+  // Abre la conexión con el token actual. Si se cierra sola (servidor caído, sin red), se reintenta
+  function open() {
+    const token = useAuthStore.getState().session?.token ?? "";
+    connection = openChatConnection(token, handle, () => {
+      set({ connected: false });
+      reconnector.dropped();
+    });
+  }
+  const reconnector = createReconnector(open, (reconnect) => set({ reconnect }));
+
   function handle(event: ChatServerEvent) {
     switch (event.type) {
       case "history":
+        reconnector.restored();
         return set({ messages: event.messages, mod: event.mod, connected: true });
       case "message":
         return set({ messages: [...get().messages, event.message] });
@@ -60,12 +75,15 @@ export const useChatStore = create<ChatState>((set, get) => {
     messages: [],
     mod: false,
     connected: false,
+    reconnect: CONNECTED,
+    reconnectNow: () => reconnector.retryNow(),
     notice: null,
 
     connect() {
-      const token = useAuthStore.getState().session?.token ?? "";
-      connection = openChatConnection(token, handle, () => set({ connected: false }));
+      open();
       return () => {
+        reconnector.stop();
+        set({ reconnect: CONNECTED });
         connection?.close();
         connection = null;
         set({ connected: false });
