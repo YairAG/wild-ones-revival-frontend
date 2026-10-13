@@ -87,6 +87,14 @@ const LABELS: Record<string, string> = {
   2153: "PIERNAS_~",
   2156: "PIES_~",
   2159: "OTROS_~",
+  // Pestaña seleccionada de verdad (sprites headsSelected...): icono arriba y la palabra debajo
+  1835: "CABEZA_~",
+  1837: "TORSO_~",
+  1839: "PIERNAS_~",
+  1841: "PIES_~",
+  1843: "OTROS_~",
+  2142: "PIERNAS_~",
+  2144: "PIES_~",
   // Baúl de accesorios (Mis mascotas): las mismas pestañas, sin seleccionar
   2146: "CABEZA~",
   2149: "TORSO~",
@@ -185,6 +193,21 @@ const PET_RENDERER = `
 
 // Cambios al código del juego. Por cada clase: [qué buscar (expresión regular), por qué cambiarlo]. En el repo
 // solo está esto; el código original se exporta del SWF al armarlo
+// Nombre en español de un poder de mascota sin arma en WeaponsGrid (los demás usan el alt de su arma)
+const POWER_NAMES: Record<string, string> = {
+  fly: "Volar",
+  spit: "Escupir fuego",
+  howl: "Aullido",
+  tailwhip: "Coletazo",
+  punchsmack: "Golpazo",
+  headbutt: "Cabezazo",
+  tailspin: "Giro de cola",
+  none: "Ninguna",
+};
+// Expresión de ActionScript: el nombre del poder guardado en `power` (una expresión de ActionScript)
+const powerName = (power: string) =>
+  `(Ballistics.weaponObject[${power}] ? Ballistics.weaponObject[${power}].alt : (${JSON.stringify(POWER_NAMES)}[${power}] || ${power}))`;
+
 const SCRIPT_PATCHES: Record<string, [RegExp, string][]> = {
   // Mascotas para la web (ver PET_RENDERER): las clases que usa, las funciones y el registro de requestPet
   Ballistics: [
@@ -277,6 +300,22 @@ const SCRIPT_PATCHES: Record<string, [RegExp, string][]> = {
         "            }",
         "         }",
       ].join("\n"),
+    ],
+  ],
+  // "Habilidad especial" de la mascota (su panel y la tienda): escribían el petPower interno ("superjump", "fly").
+  // Ahora el nombre de su arma en WeaponsGrid (ya traducido) o, si no tiene arma, el de POWER_NAMES
+  "com.playdom.ballistics.pet.PetInfoPanelContentView": [
+    [/specialTF\.text = String\("none"\);/, 'specialTF.text = "Ninguna";'],
+    [/specialTF\.text = myModel\.petPower;/, `specialTF.text = ${powerName("myModel.petPower")};`],
+  ],
+  "com.playdom.ballistics.shop.ShopPetsView": [
+    [
+      /petsInfoPanel\.specialAbilityTF\.text = "none";/,
+      'petsInfoPanel.specialAbilityTF.text = "Ninguna";',
+    ],
+    [
+      /petsInfoPanel\.specialAbilityTF\.text = myModel\.chassis\.petPower;/,
+      `petsInfoPanel.specialAbilityTF.text = ${powerName("myModel.chassis.petPower")};`,
     ],
   ],
   // Pantalla final: el botón "avisar a mis amigos" publicaba en Facebook (ExternalCalls.viral); se esconde
@@ -400,6 +439,13 @@ const dictionary: Record<string, string> = existsSync(DICTIONARY)
   ? JSON.parse(readFileSync(DICTIONARY, "utf8"))
   : {};
 
+// Posición x (en twips) de cada renglón, para textos que en español quedan descentrados: id del texto → x por
+// renglón (null deja el original). 1482/1483: "VER" / "MAS" del botón del baúl (eran "SEE" / "MORE")
+const TEXT_X: Record<string, (number | null)[]> = {
+  1482: [405, 405],
+  1483: [405, 405],
+};
+
 for (const file of readdirSync(`${WORK}/texts`)) {
   const source = readFileSync(`${WORK}/texts/${file}`, "utf8");
   const newline = source.includes("\r\n") ? "\r\n" : "\n";
@@ -424,6 +470,11 @@ for (const file of readdirSync(`${WORK}/texts`)) {
         .filter((line) => !/^spacing(pair)? /.test(line))
         .map((line) => line.replace(/^letterspacing .*/, "letterspacing 0"))
         .join(newline);
+    }
+    const x = TEXT_X[file.replace(".txt", "")]?.[(i - 1) / 2];
+    if (x != null) {
+      changed = true;
+      format = format.replace(/^x -?\d+/m, `x ${x}`);
     }
     result += `[${format}]${escape(translated)}`;
   }
