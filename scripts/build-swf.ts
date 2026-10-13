@@ -5,6 +5,7 @@
 //   4. redibuja las palabras que son dibujos (HOME, MULTIPLAYER, SHOP)   → swf/RedrawLabels.java
 //   5. cambia código del juego (p. ej. activar "listo" en la sala)      → JPEXS (-export / -importScript)
 //   6. traduce los textos fijos con el diccionario e importa el resultado → JPEXS (-export / -importText)
+//   7. recorta el escenario por abajo (ya no está la barra de vecinos)    → JPEXS (-header)
 //
 //   node scripts/build-swf.ts
 //
@@ -65,9 +66,21 @@ const LABEL_BACKGROUNDS = [
   "1370@-1:52+45",
 ];
 
+// Alto del escenario: el original mide 760 x 740, pero lo de abajo de y=555 era la barra de vecinos (el lobby y
+// los controles de la partida terminan ahí)
+const STAGE_HEIGHT = 555;
+
 // Cambios al código del juego. Por cada clase: [qué buscar (expresión regular), por qué cambiarlo]. En el repo
 // solo está esto; el código original se exporta del SWF al armarlo
 const SCRIPT_PATCHES: Record<string, [RegExp, string][]> = {
+  // Barra de vecinos de abajo (amigos de Facebook): se esconde en vez de quitarla porque otras partes del juego
+  // la leen (Ballistics.ladder). Los amigos ya están en el panel de la web
+  "com.playdom.ballistics.home.MainView": [
+    [/(addChild\((?:this\.)?_ladderView\);)/, "$1 _ladderView.visible = false;"],
+  ],
+  // El perfil mini (al hacer clic en un jugador) no baja de 740 - 200; con el escenario recortado quedaría
+  // cortado
+  "com.playdom.ballistics.home.OverlayView": [[/740 - 200/g, `${STAGE_HEIGHT} - 200`]],
   // Sala de espera: el original te marcaba "listo" siempre y escondía los botones. Ahora empiezas sin estar
   // listo, el estado sale del servidor y se ve el botón "listo" o "no listo" según toque. Las flechas de
   // mascota se esconden: en el original solo giraban en pantalla, no cambiaban la mascota
@@ -221,7 +234,10 @@ for (const file of readdirSync(`${WORK}/texts`)) {
 }
 
 writeFileSync(DICTIONARY, JSON.stringify(dictionary, null, 2));
-ffdec("-importText", `${WORK}/5-code.swf`, OUTPUT, `${WORK}/import`);
+ffdec("-importText", `${WORK}/5-code.swf`, `${WORK}/6-texts.swf`, `${WORK}/import`);
+
+// 7: el escenario se corta donde estaba la barra de vecinos (ver SCRIPT_PATCHES)
+ffdec("-header", "-set", "height", `${STAGE_HEIGHT}px`, `${WORK}/6-texts.swf`, OUTPUT);
 
 const missing = Object.values(dictionary).filter((text) => !text).length;
 console.log(
