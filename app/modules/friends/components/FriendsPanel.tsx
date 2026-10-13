@@ -3,14 +3,9 @@ import type { FormEvent } from "react";
 import { ErrorMessage } from "@/components/ErrorMessage";
 import { Panel } from "@/components/Panel";
 import { useInvitesStore } from "@/modules/invites/store";
+import { useProfileStore } from "@/modules/profile/store";
 import { useFriendsStore } from "../store";
-import type { Presence } from "../types";
-
-const presenceLabel: Record<Presence, string> = {
-  playing: "En partida",
-  lobby: "En lobby",
-  offline: "Desconectado",
-};
+import { presenceLabel } from "../presence";
 
 // Ref de callback fuera del componente (siempre la misma): mientras el panel está en pantalla, la lista
 // se recarga sola; al quitarlo, React llama a la función que devuelve y se detiene
@@ -26,7 +21,8 @@ async function addFriend(e: FormEvent<HTMLFormElement>) {
 }
 
 export function FriendsPanel() {
-  const { list, error, accept, dismiss, confirmingRemove, askRemove, remove } = useFriendsStore();
+  const { list, error, accept, dismiss, unblock, confirmingRemove, askRemove, remove } =
+    useFriendsStore();
   const online = list.friends.filter((friend) => friend.presence !== "offline").length;
 
   return (
@@ -103,11 +99,13 @@ export function FriendsPanel() {
                   className={`estado ${isOnline ? "estado-en-linea" : "estado-desconectado"}`}
                 />
                 <span className="flex min-w-0 flex-1 flex-col leading-tight">
-                  <span
-                    className={`text-cuerpo truncate font-bold ${isOnline ? "text-texto" : "text-texto-terciario"}`}
+                  {/* El nombre abre su perfil */}
+                  <button
+                    onClick={() => useProfileStore.getState().show(friend.id)}
+                    className={`text-cuerpo truncate text-left font-bold hover:underline ${isOnline ? "text-texto" : "text-texto-terciario"}`}
                   >
                     {friend.dname}
-                  </span>
+                  </button>
                   <span className="text-micro font-semibold text-texto-secundario">
                     {presenceLabel[friend.presence]} · Nivel {friend.level}
                   </span>
@@ -143,6 +141,22 @@ export function FriendsPanel() {
                 <span className="text-cuerpo font-bold text-texto-terciario">{player.dname}</span>
                 <button onClick={() => dismiss(player.id)} className="btn btn-fila btn-texto">
                   Cancelar
+                </button>
+              </div>
+            ))}
+          </section>
+        )}
+
+        {list.blocked.length > 0 && (
+          <section>
+            <h3 className="text-micro mb-1 font-extrabold text-texto-secundario uppercase">
+              Bloqueados
+            </h3>
+            {list.blocked.map((player) => (
+              <div key={player.id} className="flex min-h-11 items-center justify-between gap-2">
+                <span className="text-cuerpo font-bold text-texto-terciario">{player.dname}</span>
+                <button onClick={() => unblock(player.id)} className="btn btn-fila btn-texto">
+                  Desbloquear
                 </button>
               </div>
             ))}

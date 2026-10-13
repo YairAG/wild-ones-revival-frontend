@@ -21,4 +21,5 @@ export type FriendsList = {
   friends: Friend[]; // en línea primero
   incoming: PlayerRef[]; // solicitudes que te enviaron
   outgoing: PlayerRef[]; // solicitudes que enviaste
+  blocked: PlayerRef[]; // jugadores que bloqueaste
 };

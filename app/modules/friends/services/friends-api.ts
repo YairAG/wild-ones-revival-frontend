@@ -10,4 +10,5 @@ export const friendsApi = {
   dismiss: (id: number) => request("DELETE", `/friends/requests/${id}`),
   // Dejar de ser amigos (para los dos)
   remove: (id: number) => request("DELETE", `/friends/${id}`),
+  unblock: (id: number) => request("DELETE", `/blocks/${id}`),
 };

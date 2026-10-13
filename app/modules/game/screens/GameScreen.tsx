@@ -6,6 +6,7 @@ import { ChangelogPanel } from "@/modules/changelog/components/ChangelogPanel";
 import { GlobalChatPanel } from "@/modules/chat/components/GlobalChatPanel";
 import { FriendsPanel } from "@/modules/friends/components/FriendsPanel";
 import { InviteToast } from "@/modules/invites/components/InviteToast";
+import { ProfileDialog } from "@/modules/profile/components/ProfileDialog";
 import { ConnectionLost } from "../components/ConnectionLost";
 import { useGameStore } from "../store";
 
@@ -46,6 +47,7 @@ export function GameScreen() {
       </header>
       <ErrorMessage message={error} />
       <InviteToast />
+      <ProfileDialog />
       {/* Pantalla ancha (xl): amigos y notas | juego | chat, sin scroll.
           Más angosta: el juego arriba y los paneles abajo (en dos columnas desde md), con scroll de página */}
       <main className="grid gap-4 p-4 md:grid-cols-2 xl:flex xl:min-h-0 xl:flex-1">

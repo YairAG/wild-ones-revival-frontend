@@ -7,6 +7,7 @@ const list = {
   friends: [{ id: 2, dname: "Beto", level: 3, presence: "lobby" }],
   incoming: [{ id: 3, dname: "Caro" }],
   outgoing: [],
+  blocked: [{ id: 4, dname: "Dani" }],
 };
 
 // Backend de cuentas simulado: cada llamada responde con la siguiente de la lista, con el formato del backend.
@@ -27,7 +28,7 @@ function mockBackend(...responses: [number, object?][]) {
 beforeEach(() => {
   useAuthStore.setState({ session: testSession });
   useFriendsStore.setState({
-    list: { friends: [], incoming: [], outgoing: [] },
+    list: { friends: [], incoming: [], outgoing: [], blocked: [] },
     error: null,
     confirmingRemove: null,
   });
@@ -92,4 +93,12 @@ test("mientras el panel está en pantalla recarga cada 15 s, y para al quitarlo"
   stop();
   await vi.advanceTimersByTimeAsync(60_000);
   expect(fetchMock).toHaveBeenCalledTimes(2);
+});
+
+test("desbloquear usa DELETE /blocks/:id y recarga", async () => {
+  const fetchMock = mockBackend([200], [200, list]);
+  await useFriendsStore.getState().unblock(4);
+  expect(fetchMock.mock.calls[0][0]).toMatch(/\/blocks\/4$/);
+  expect(fetchMock.mock.calls[0][1].method).toBe("DELETE");
+  expect(useFriendsStore.getState().list.blocked).toEqual([{ id: 4, dname: "Dani" }]);
 });

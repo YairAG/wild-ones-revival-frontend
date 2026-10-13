@@ -3,6 +3,8 @@
 import type { FormEvent } from "react";
 import { Panel } from "@/components/Panel";
 import { useAuthStore } from "@/modules/auth/store";
+import { useFriendsStore } from "@/modules/friends/store";
+import { useProfileStore } from "@/modules/profile/store";
 import { ModerationDialog } from "@/modules/moderation/components/ModerationDialog";
 import { useModerationStore } from "@/modules/moderation/store";
 import { useChatStore } from "../store";
@@ -39,6 +41,9 @@ export function GlobalChatPanel() {
   const { messages, mod, connected, reconnect, reconnectNow, notice, remove, askMute } =
     useChatStore();
   const myId = useAuthStore((s) => s.session?.id);
+  // Los mensajes de quien bloqueaste no se muestran
+  const blocked = useFriendsStore((s) => s.list.blocked);
+  const visible = messages.filter((m) => !blocked.some((b) => b.id === m.userId));
 
   return (
     <Panel
@@ -95,22 +100,30 @@ export function GlobalChatPanel() {
             )}
           </p>
         )}
-        {connected && messages.length === 0 && (
+        {connected && visible.length === 0 && (
           <p className="ayuda">Nadie ha escrito todavía. ¡Saluda!</p>
         )}
         {/* Como conversación: tus mensajes a la derecha (como "Tú"), los de los demás a la izquierda */}
-        {messages.map((message, i) => {
+        {visible.map((message, i) => {
           const mine = message.userId === myId;
           return (
             <div
               key={message.id}
-              ref={i === messages.length - 1 ? scrollIntoView : undefined}
+              ref={i === visible.length - 1 ? scrollIntoView : undefined}
               className={`max-w-[85%] rounded-control px-2.5 py-1.5 [overflow-wrap:anywhere] ${mine ? "self-end bg-nube text-right" : "self-start bg-campo"}`}
             >
               <p>
-                <span className="mr-1.5 font-extrabold text-texto">
-                  {mine ? "Tú" : message.dname}
-                </span>
+                {mine ? (
+                  <span className="mr-1.5 font-extrabold text-texto">Tú</span>
+                ) : (
+                  // El nombre abre su perfil; si lo reportas, se adjunta este mensaje
+                  <button
+                    onClick={() => useProfileStore.getState().show(message.userId, message)}
+                    className="mr-1.5 font-extrabold text-texto hover:underline"
+                  >
+                    {message.dname}
+                  </button>
+                )}
                 <span className="chat-hora mr-0">{time(message.at)}</span>
               </p>
               {/* Si el filtro tapó algo, el moderador ve el original al pasar el mouse */}

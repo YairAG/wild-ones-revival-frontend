@@ -13,6 +13,7 @@ type FriendsState = {
   send(dname: string): Promise<boolean>; // true si se envió
   accept(id: number): Promise<void>;
   dismiss(id: number): Promise<void>;
+  unblock(id: number): Promise<void>;
   // Quitar un amigo, en dos pasos: askRemove marca la fila que pide confirmación; remove lo quita de verdad
   confirmingRemove: number | null;
   askRemove(id: number | null): void; // null: cancelar la confirmación
@@ -20,7 +21,7 @@ type FriendsState = {
   startRefreshing(): () => void; // devuelve la función que la detiene
 };
 
-const empty: FriendsList = { friends: [], incoming: [], outgoing: [] };
+const empty: FriendsList = { friends: [], incoming: [], outgoing: [], blocked: [] };
 
 export const useFriendsStore = create<FriendsState>((set, get) => {
   // Hace la acción y recarga; si falla, guarda el mensaje del backend para mostrarlo
@@ -51,6 +52,7 @@ export const useFriendsStore = create<FriendsState>((set, get) => {
     send: (dname) => run(() => friendsApi.send(dname)),
     accept: async (id) => void (await run(() => friendsApi.accept(id))),
     dismiss: async (id) => void (await run(() => friendsApi.dismiss(id))),
+    unblock: async (id) => void (await run(() => friendsApi.unblock(id))),
 
     confirmingRemove: null,
     askRemove: (id) => set({ confirmingRemove: id }),
