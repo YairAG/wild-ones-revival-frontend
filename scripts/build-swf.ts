@@ -3,7 +3,8 @@
 //   2. oculta botones de Facebook y de compras                            → swf/HideElements.java
 //   3. traduce los textos que pone el código ("unlock at level "...)     → swf/ReplaceStrings.java
 //   4. redibuja las palabras que son dibujos (HOME, MULTIPLAYER, SHOP)   → swf/RedrawLabels.java
-//   5. traduce los textos fijos con el diccionario e importa el resultado → JPEXS (-export / -importText)
+//   5. cambia código del juego (p. ej. activar "listo" en la sala)      → JPEXS (-export / -importScript)
+//   6. traduce los textos fijos con el diccionario e importa el resultado → JPEXS (-export / -importText)
 //
 //   node scripts/build-swf.ts
 //
@@ -63,6 +64,24 @@ const LABEL_BACKGROUNDS = [
   "195@56:85+17,152:181+38,200:229+11",
   "1370@-1:52+45",
 ];
+
+// Cambios al código del juego. Por cada clase: [qué buscar (expresión regular), por qué cambiarlo]. En el repo
+// solo está esto; el código original se exporta del SWF al armarlo
+const SCRIPT_PATCHES: Record<string, [RegExp, string][]> = {
+  // Sala de espera: el original te marcaba "listo" siempre y escondía los botones. Ahora empiezas sin estar
+  // listo, el estado sale del servidor y se ve el botón "listo" o "no listo" según toque
+  "com.playdom.ballistics.gameroomlobby.GameRoomLobbyMainView": [
+    [/(addDataChangeEventHandlers\(\);\s*this\.setReadyState\()true\)/, "$1false)"],
+    [
+      /(getPlayerStatus\(mainModel\.player\.id\);\s*this\.setReadyState\()true\)/,
+      '$1playerStatus == "ready")',
+    ],
+    [
+      /(this\.readyOverlayCheck\.visible = isReady;)/,
+      "$1 this.readyButton.visible = !isReady; this.notReadyButton.visible = isReady;",
+    ],
+  ],
+};
 
 // Fuentes "Chinese Rocks" (la de los menús): solo tiene mayúsculas, así que sus textos van en mayúsculas
 const UPPERCASE_FONTS = new Set([
@@ -149,7 +168,21 @@ javaTool(
   ...LABEL_BACKGROUNDS,
 );
 
-// 5: textos fijos. Cada archivo exportado es "[límites]" seguido de renglones "[formato]texto"
+// 5: código del juego. Se exporta cada clase, se le aplican los cambios y JPEXS la vuelve a compilar
+const classes = Object.keys(SCRIPT_PATCHES);
+ffdec("-selectclass", classes.join(","), "-export", "script", `${WORK}/as`, `${WORK}/4-labels.swf`);
+for (const className of classes) {
+  const file = `${WORK}/as/scripts/${className.replace(/\./g, "/")}.as`;
+  let source = readFileSync(file, "utf8");
+  for (const [find, replace] of SCRIPT_PATCHES[className]) {
+    if (!find.test(source)) throw new Error(`${className}: no encontré ${find}`); // el SWF cambió
+    source = source.replace(find, replace);
+  }
+  writeFileSync(file, source, "utf8");
+}
+ffdec("-importScript", `${WORK}/4-labels.swf`, `${WORK}/5-code.swf`, `${WORK}/as`);
+
+// 6: textos fijos. Cada archivo exportado es "[límites]" seguido de renglones "[formato]texto"
 ffdec("-format", "text:formatted", "-export", "text", `${WORK}/texts`, ORIGINAL);
 const dictionary: Record<string, string> = existsSync(DICTIONARY)
   ? JSON.parse(readFileSync(DICTIONARY, "utf8"))
@@ -186,7 +219,7 @@ for (const file of readdirSync(`${WORK}/texts`)) {
 }
 
 writeFileSync(DICTIONARY, JSON.stringify(dictionary, null, 2));
-ffdec("-importText", `${WORK}/4-labels.swf`, OUTPUT, `${WORK}/import`);
+ffdec("-importText", `${WORK}/5-code.swf`, OUTPUT, `${WORK}/import`);
 
 const missing = Object.values(dictionary).filter((text) => !text).length;
 console.log(

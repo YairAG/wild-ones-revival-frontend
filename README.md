@@ -61,7 +61,10 @@ Parte siempre de `public/game/original-publicV1.swf` (copia del SWF sin tocar) y
    ser una clave interna.
 4. `scripts/swf/RedrawLabels.java`: redibuja las palabras del menú que son dibujos y no texto (HOME → INICIO,
    MULTIPLAYER → MULTIJUGADOR, SHOP → TIENDA) con la misma fuente, y alarga su fondo.
-5. Traduce los textos fijos con el diccionario local `public/game/translations/swf-es.json` y los importa con
+5. Cambia código del juego (`SCRIPT_PATCHES` en el script): exporta la clase del SWF, le aplica unos
+   "busca y reemplaza" y JPEXS la vuelve a compilar. Hoy: la sala de espera deja darle "listo" / "no listo" y
+   cambiar de mascota (el original te marcaba listo siempre). En el repo solo están los cambios, no el código.
+6. Traduce los textos fijos con el diccionario local `public/game/translations/swf-es.json` y los importa con
    JPEXS. Una clave `#<id> texto` traduce distinto solo ese texto (cuando no cabe).
 
 ## Cómo se conecta el SWF (`app/modules/game/services/ruffle.ts`)
