@@ -40,11 +40,19 @@ afterEach(() => close());
 
 test("lee los mensajes del servidor: la cabecera de la primera respuesta y varios juntos", () => {
   const a = JSON.stringify({ command: "social_ready", ok: true, code: 200, message: "Conectado" });
-  const b = JSON.stringify({ command: "error", ok: false, code: 404, message: "x", error: "X" });
-  const data = `Originality is undetected plagiarism.\r\n\r\n0000${a.length}${a}0000${b.length}${b}`;
+  // con ñ y acento: la longitud va en bytes ("ñ" y "ó" cuentan 2)
+  const b = JSON.stringify({
+    command: "error",
+    ok: false,
+    code: 404,
+    message: "Señal perdida, inténtalo",
+    error: "X",
+  });
+  const bytes = (s: string) => String(new TextEncoder().encode(s).length).padStart(6, "0");
+  const data = `Originality is undetected plagiarism.\r\n\r\n${bytes(a)}${a}${bytes(b)}${b}`;
   expect(readMessages(data)).toEqual([
     { command: "social_ready", ok: true, code: 200, message: "Conectado" },
-    { command: "error", ok: false, code: 404, message: "x", error: "X" },
+    { command: "error", ok: false, code: 404, message: "Señal perdida, inténtalo", error: "X" },
   ]);
 });
 
